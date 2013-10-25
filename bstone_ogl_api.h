@@ -9,6 +9,7 @@
 
 #include "SDL.h"
 
+
 // Avoid __declspec(dllimport).
 #ifdef __WIN32__
 #ifndef _GDI32_
@@ -63,6 +64,9 @@ public:
 
     // Returns API independent constant GL_RED.
     static GLenum get_gl_red();
+
+    // Returns a maximum 2D/1D texture image dimension.
+    static GLint get_max_2d_texture_size();
 
 private:
     OglApi();

@@ -20,6 +20,8 @@ bstone::OglVersion version_;
 // True if major version equal or greater than 3.
 bool has_ext_texture_rg_ = false;
 
+GLint max_2d_texture_size_ = 0;
+
 
 } // namespace
 
@@ -67,6 +69,10 @@ void (APIENTRY* glGenTextures_)(
     GLuint* textures) = NULL;
 
 GLenum (APIENTRY* glGetError_)() = NULL;
+
+void (APIENTRY* glGetIntegerv_)(
+    GLenum pname,
+    GLint* params) = NULL;
 
 const GLubyte* (APIENTRY* glGetString_)(
     GLenum name) = NULL;
@@ -186,6 +192,13 @@ void APIENTRY glGenTextures(
 GLenum APIENTRY glGetError()
 {
     return glGetError_();
+}
+
+void APIENTRY glGetIntegerv(
+    GLenum pname,
+    GLint* params)
+{
+    return glGetIntegerv_(pname, params);
 }
 
 const GLubyte* APIENTRY glGetString(
@@ -617,6 +630,9 @@ bool OglApi::initialize()
         "glGetError", glGetError_, missing_symbols);
 
     ogl_api_get_base_symbol(
+        "glGetIntegerv", glGetIntegerv_, missing_symbols);
+
+    ogl_api_get_base_symbol(
         "glGetString", glGetString_, missing_symbols);
 
     ogl_api_get_base_symbol(
@@ -795,6 +811,18 @@ bool OglApi::initialize()
     } else
         has_ext_texture_rg_ = (version_.get_major() >= 3);
 
+
+    //
+    // Get implementation defined values.
+    //
+
+    ::glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_2d_texture_size_);
+
+
+    //
+    // Finalize initialization.
+    //
+
     is_initialized_ = true;
     vendor_ = reinterpret_cast<const char*>(vendor);
     renderer_ = reinterpret_cast<const char*>(renderer);
@@ -859,6 +887,8 @@ void OglApi::uninitialize()
     version_.reset();
 
     has_ext_texture_rg_ = false;
+
+    max_2d_texture_size_ = 0;
 }
 
 // (static)
@@ -901,6 +931,12 @@ GLenum OglApi::get_gl_r8()
 GLenum OglApi::get_gl_red()
 {
     return 0x1903;
+}
+
+// (static)
+GLint OglApi::get_max_2d_texture_size()
+{
+    return max_2d_texture_size_;
 }
 
 
