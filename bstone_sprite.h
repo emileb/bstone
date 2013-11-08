@@ -12,12 +12,17 @@ class Sprite {
 public:
     Sprite();
 
+    Sprite(
+        int id);
+
     ~Sprite();
 
     bool initialize(
         int id);
 
     void uninitialize();
+
+    OglTexture* get_texture();
 
     bool is_initialized() const;
 

@@ -1368,13 +1368,15 @@ static void in_handle_window(
     switch (e.event) {
     case SDL_WINDOWEVENT_FOCUS_GAINED:
         mouse_buttons = 0;
-        ::SDL_SetRelativeMouseMode(SDL_TRUE);
+        // FIXME Uncomment later!
+        //::SDL_SetRelativeMouseMode(SDL_TRUE);
         ::in_clear_mouse_deltas();
         break;
 
     case SDL_WINDOWEVENT_FOCUS_LOST:
         mouse_buttons = 0;
-        ::SDL_SetRelativeMouseMode(SDL_FALSE);
+        // FIXME Uncomment later!
+        //::SDL_SetRelativeMouseMode(SDL_FALSE);
         ::in_clear_mouse_deltas();
         break;
     }

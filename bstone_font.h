@@ -12,7 +12,7 @@ namespace bstone {
 
 class FontChar {
 public:
-    size_t width;
+    int width;
 
     // Texture coordinates
     //
@@ -43,8 +43,22 @@ public:
 
     void uninitialize();
 
+    void measure_string(
+        const std::string& string,
+        int& width,
+        int& height) const;
+
+    void measure_text(
+        const std::string& text,
+        int& width,
+        int& height) const;
+
     const FontChar& get_char(
         int index) const;
+
+    int get_height() const;
+
+    OglTexture* get_texture();
 
     bool is_initialized() const;
 

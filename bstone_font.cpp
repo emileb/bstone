@@ -45,6 +45,8 @@ bool Font::initialize(
 {
     uninitialize();
 
+    id += STARTFONT;
+
     if (id < 0 || id >= NUMCHUNKS)
         throw std::out_of_range("id");
 
@@ -79,8 +81,8 @@ bool Font::initialize(
     suggest_texture_dimensions(&widths[0], height,
         texture_width, texture_height);
 
-    std::vector<Rgba> buffer;
-    buffer.resize(texture_width * texture_height, Rgba(0));
+    std::vector<Rgba8U> buffer;
+    buffer.resize(texture_width * texture_height, Rgba8U(0));
 
     const float texture_width_rf = 1.0F / texture_width;
     const float texture_height_rf = 1.0F / texture_height;
@@ -102,23 +104,18 @@ bool Font::initialize(
         const Uint8* char_data = static_cast<const Uint8*>(grsegs[id]);
         char_data = &char_data[offsets[i]];
 
-        for (int cx = 0; cx < width; ++cx) {
-            for (int cy = 0; cy < height; ++cy) {
-                Uint8 palette_index = *char_data++;
+        for (int cy = 0; cy < height; ++cy) {
+            for (int cx = 0; cx < width; ++cx) {
+                bool has_pixel = ((*char_data++) != 0);
 
-                if (palette_index == 0)
+                if (!has_pixel)
                     continue;
 
                 int x = tx + cx;
                 int y = ty + (height - 1 - cy);
                 int offset = (y * texture_width) + x;
 
-                const Uint8* palette_color = &vgapal[3 * palette_index];
-
-                buffer[offset] = Rgba(
-                    palette_color[0],
-                    palette_color[1],
-                    palette_color[2]);
+                buffer[offset] = Rgba8U(255);
             }
         }
 
@@ -161,6 +158,66 @@ void Font::uninitialize()
     texture_ = NULL;
 }
 
+void Font::measure_string(
+    const std::string& string,
+    int& width,
+    int& height) const
+{
+    width = 0;
+    height = 0;
+
+    if (!is_initialized())
+        return;
+
+    if (string.empty())
+        return;
+
+    size_t length = string.size();
+
+    for (size_t i = 0; i < length; ++i) {
+        int char_index = static_cast<Uint8>(string[i]);
+        width += chars_[char_index].width;
+    }
+
+    height = height_;
+}
+
+void Font::measure_text(
+    const std::string& text,
+    int& width,
+    int& height) const
+{
+    width = 0;
+    height = 0;
+
+    if (!is_initialized())
+        return;
+
+    if (text.empty())
+        return;
+
+    int current_width = 0;
+    size_t length = text.size();
+
+    height = height_;
+
+    for (size_t i = 0; i < length; ++i) {
+        int char_index = static_cast<Uint8>(text[i]);
+
+        if (char_index == '\n') {
+            if (current_width > width)
+                width = current_width;
+
+            current_width = 0;
+            height += height_;
+        }
+        current_width += chars_[char_index].width;
+    }
+
+    if (current_width > width)
+        width = current_width;
+}
+
 const FontChar& Font::get_char(
     int index) const
 {
@@ -171,6 +228,16 @@ const FontChar& Font::get_char(
         throw std::out_of_range("index");
 
     return chars_[index];
+}
+
+int Font::get_height() const
+{
+    return height_;
+}
+
+OglTexture* Font::get_texture()
+{
+    return texture_;
 }
 
 bool Font::is_initialized() const
@@ -190,6 +257,10 @@ void Font::suggest_texture_dimensions(
     for (int i = 0; i < 256; ++i)
         total_width += chars_widths[i];
 
+    // (By increasing height by 1 we avoid artefacts when using
+    // non-nearest texture filtering. Since characters itself
+    // already padded horizontally with 1 pixel in file we do not need
+    // to increase a width.)
     int area = total_width * (chars_height + 1);
 
     int texture_width = 1;

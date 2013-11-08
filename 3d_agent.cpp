@@ -1629,7 +1629,7 @@ void DrawInfoArea(void)
 				InfoAreaSetup.y += IA_FONT_HEIGHT;
 			}
 			else
-				InfoAreaSetup.x = px;
+				InfoAreaSetup.x = static_cast<Sint16>(px);
 		}
 		else
 			first_ch = HandleControlCodes(first_ch);
@@ -3489,6 +3489,9 @@ void SaveOverheadChunk(
 //--------------------------------------------------------------------------
 // DisplayTeleportName()
 //--------------------------------------------------------------------------
+
+// FIXME
+#if 0
 void DisplayTeleportName(char tpNum, boolean locked)
 {
 	const char *s;
@@ -3511,6 +3514,32 @@ void DisplayTeleportName(char tpNum, boolean locked)
 	VW_Bar(54,101,212,9,0x52);
 	VW_MarkUpdateBlock(54,101,265,108);
 	ShPrint(s,0,false);
+}
+#endif // 0
+
+void DisplayTeleportName(
+    char tpNum,
+    boolean locked)
+{
+    const char* s = NULL;
+
+    if (locked) {
+        fontcolor = 0xF5;
+        s = "-- TELEPORT DISABLED --";
+    } else {
+        fontcolor = 0x57;
+        LoadLocationText(tpNum);
+        s = LocationText;
+    }
+
+    int w;
+    int h;
+
+    ::VW_MeasurePropString(s, w, h);
+    ::py = 103;
+    ::px = 160 - w / 2;
+    ::VW_Bar(54, 101, 212, 9, 0x52);
+    ::ShPrint(s, 0, false);
 }
 
 //--------------------------------------------------------------------------

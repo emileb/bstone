@@ -1242,6 +1242,8 @@ void MegaSimpleScaleShape (Sint16 xcenter, Sint16 ycenter, Sint16 shapenum, Uint
 }
 #endif // 0
 
+// FIXME
+#if 0
 void MegaSimpleScaleShape(
     int xcenter,
     int ycenter,
@@ -1353,7 +1355,22 @@ void MegaSimpleScaleShape(
 
     bufferofs = old_bufferofs;
 }
+#endif // 0
 
+void MegaSimpleScaleShape(
+    int xcenter,
+    int ycenter,
+    int shapenum,
+    int height,
+    int shade)
+{
+    bstone::DrawBatchCommand command;
+    command.type = bstone::DBCT_SPRITE;
+    command.sprite = ::g_resources.get_sprites().add(shapenum);
+    command.x = xcenter - 32;
+    command.y = ycenter - 32;
+    ::g_draw_batch.add_command(command);
+}
 
 //
 // bit mask tables for drawing scaled strips up to eight pixels wide

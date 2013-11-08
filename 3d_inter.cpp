@@ -204,7 +204,7 @@ void PreloadGraphics(void)
 void	DrawHighScores(void)
 {
 	char		buffer[16];
-	Uint16		i,
+	int		i,
 				w,h;
 	HighScore	*s;
 
@@ -250,14 +250,14 @@ void	DrawHighScores(void)
 			SETFONTCOLOR(HIGHLIGHT_TEXT_COLOR+1,TERM_BACK_COLOR);
 
         bstone::C::xitoa(s->score, buffer, 10);
-		USL_MeasureString(buffer,&w,&h);
+		USL_MeasureString(buffer,w,h);
 		ShadowPrint(buffer,205 - w,68 + (SCORE_Y_SPACING * i));		// 235
 
 		//
 		// mission ratio
 		//
 		bstone::C::xitoa(s->ratio, buffer, 10);
-		USL_MeasureString(buffer,&w,&h);
+		USL_MeasureString(buffer,w,h);
 		ShadowPrint(buffer,272-w,68 + (SCORE_Y_SPACING * i));
 	}
 

@@ -2771,8 +2771,8 @@ void Warped (void);
 void RotateView(Sint16 DestAngle,Uint8 RotSpeed);
 void DrawWarpIn(void);
 void BMAmsg(const char *msg);
-void CacheBMAmsg(Uint16 MsgNum);	  
-void BevelBox(Sint16 xl, Sint16 yl, Sint16 w, Sint16 h, Uint8 hi, Uint8 med, Uint8 lo);
+void CacheBMAmsg(Uint16 MsgNum);
+void BevelBox(int xl, int yl, int w, int h, Uint8 hi, Uint8 med, Uint8 lo);
 
 void AddTotalPoints(Uint16 points);
 void AddTotalInformants(char informants);

@@ -2601,6 +2601,9 @@ void CacheBMAmsg(Uint16 MsgNum)
 //--------------------------------------------------------------------------
 // BevelBox()
 //--------------------------------------------------------------------------
+
+// FIXME
+#if 0
 void BevelBox(Sint16 xl, Sint16 yl, Sint16 w, Sint16 h, Uint8 hi, Uint8 med, Uint8 lo)
 {
 	Sint16 xh=xl+w-1,yh=yl+h-1;
@@ -2626,6 +2629,32 @@ void BevelBox(Sint16 xl, Sint16 yl, Sint16 w, Sint16 h, Uint8 hi, Uint8 med, Uin
 	VWB_Plot (xl,yh,hc);						// lower-left
 	VWB_Plot (xh,yl,hc);						// upper-right
 }
+#endif // 0
+
+void BevelBox(
+    int xl,
+    int yl,
+    int w,
+    int h,
+    Uint8 hi,
+    Uint8 med,
+    Uint8 lo)
+{
+    Sint16 xh = xl + w - 1;
+    Sint16 yh = yl + h - 1;
+    Uint8 hc;
+
+    ::VWB_Bar(xl, yl, w, h, med); // inside
+
+    hc = med + 1;
+
+    ::VWB_Hlin(xl, xh, yl, hi); // top
+    ::VWB_Hlin(xl, xh, yh, lo); // bottom
+    ::VWB_Vlin(yl, yh, xl, hi); // left
+    ::VWB_Vlin(yl, yh, xh, lo); // right
+    ::VWB_Plot(xl, yh, hc); // lower-left
+    ::VWB_Plot(xh, yl, hc); // upper-right
+}
 
 //--------------------------------------------------------------------------
 // ShadowPrintLocationText()
@@ -2636,7 +2665,7 @@ void ShadowPrintLocationText(sp_type type)
     const char *DebugText= "-- DEBUG MODE ENABLED --";
 	const char *s = NULL,*ls_text[3]={"-- LOADING --","-- SAVING --","-- CHANGE VIEW SIZE --"};
     char str[8];
-	Uint16 w,h;
+	int w,h;
 
 // Used for all fields...
 //
@@ -2693,7 +2722,7 @@ void ShadowPrintLocationText(sp_type type)
 		break;
 	}
 
-	VW_MeasurePropString(s,&w,&h);
+	VW_MeasurePropString(s,w,h);
 	px = 160-w/2;
 	ShPrint(s,0,false);
 }

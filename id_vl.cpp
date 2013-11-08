@@ -169,6 +169,10 @@ int screen_height = 0;
 SDL_Window* sdl_window = NULL;
 SDL_GLContext sdl_gl_context = NULL;
 
+bstone::Resources g_resources;
+bstone::DrawBatch g_draw_batch;
+bstone::Rgba8U* g_palette = NULL;
+
 
 //===========================================================================
 
@@ -842,10 +846,21 @@ void VL_Plot (Sint16 x, Sint16 y, Sint16 color)
 }
 #endif // 0
 
+// FIXME
+#if 0
 void VL_Plot(int x, int y, int color)
 {
     int offset = (4 * bufferofs) + (y * vanilla_screen_width) + x;
     vga_memory[offset] = (Uint8)color;
+}
+#endif // 0
+
+void VL_Plot(
+    int x,
+    int y,
+    int color)
+{
+    ::VL_Bar(x, y, 1, 1, color);
 }
 
 
@@ -992,6 +1007,8 @@ void VL_Bar (Sint16 x, Sint16 y, Sint16 width, Sint16 height, Sint16 color)
 }
 #endif // 0
 
+// FIXME
+#if 0
 void VL_Bar(int x, int y, int width, int height, int color)
 {
     int i;
@@ -1002,6 +1019,26 @@ void VL_Bar(int x, int y, int width, int height, int color)
         offset += vanilla_screen_width;
     }
 }
+#endif // 0
+
+void VL_Bar(
+    int x,
+    int y,
+    int width,
+    int height,
+    int color)
+{
+    bstone::DrawBatchCommand command;
+    command.type = bstone::DBCT_RECTANGLE;
+    command.color_index = color;
+    command.x = x;
+    command.y = y;
+    command.width = width;
+    command.height = height;
+
+    ::g_draw_batch.add_command(command);
+}
+
 
 /*
 ============================================================================
@@ -1568,6 +1605,8 @@ boolean ogl_check_for_and_clear_errors()
 // Just draws a screen texture.
 void ogl_draw_screen()
 {
+// FIXME
+#if 0
     glClear(GL_COLOR_BUFFER_BIT);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
@@ -1579,12 +1618,15 @@ void ogl_draw_screen()
 #endif
 
     SDL_GL_SwapWindow(sdl_window);
+#endif // 0
 }
 
 // Updates screen texture with display data and
 // draws it.
 void ogl_refresh_screen()
 {
+// FIXME
+#if 0
     GLenum format =
         bstone::OglApi::has_ext_texture_rg() ?
             bstone::OglApi::get_gl_red() :
@@ -1604,6 +1646,7 @@ void ogl_refresh_screen()
         &vga_memory[4 * displayofs]);
 
     ogl_draw_screen();
+#endif // 0
 }
 
 // Copies buffer page to a display one,
@@ -1611,6 +1654,8 @@ void ogl_refresh_screen()
 // and draws it.
 void ogl_update_screen()
 {
+// FIXME
+#if 0
     if (displayofs != bufferofs) {
         memmove(
             &vga_memory[4 * displayofs],
@@ -1619,6 +1664,7 @@ void ogl_update_screen()
     }
 
     ogl_refresh_screen();
+#endif // 0
 }
 
 // Returns an information log of a shader or a program.
@@ -1943,6 +1989,9 @@ static void ogl_uninitialize_video()
             palette_tex = GL_NONE;
         }
 
+        ::g_draw_batch.uninitialize();
+        ::g_resources.uninitialize();
+
         SDL_GL_MakeCurrent(sdl_window, NULL);
         SDL_GL_DeleteContext(sdl_gl_context);
         sdl_gl_context = NULL;
@@ -1963,9 +2012,12 @@ static void ogl_uninitialize_video()
     u_palette_tu = -1;
 
 #if defined(BSTONE_PANDORA) // Pandora VSync
-    close( fbdev );
+    close(fbdev);
     fbdev = -1;
 #endif
+
+    delete ::g_palette;
+    ::g_palette = NULL;
 }
 
 static void ogl_initialize_video()
@@ -2100,6 +2152,8 @@ static void ogl_initialize_video()
     ogl_setup_shaders();
     ogl_setup_programs();
 
+    ::g_draw_batch.initialize();
+
     SDL_ShowWindow(sdl_window);
 
     glViewport(screen_x, screen_y, screen_width, screen_height);
@@ -2108,6 +2162,9 @@ static void ogl_initialize_video()
 
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
+    ::glDepthMask(GL_FALSE);
+
+    ::glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     if (a_pos_vec4 != -1) {
         glVertexAttribPointer(
@@ -2133,7 +2190,23 @@ static void ogl_initialize_video()
         glEnableVertexAttribArray(a_tc0_vec2);
     }
 
-    glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
+    glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
+
+
+    //
+    // Palette
+    //
+
+    ::g_palette = new bstone::Rgba8U[256];
+
+    for (int i = 0; i < 256; ++i) {
+        const Uint8* palette = &::vgapal[3 * i];
+
+        ::g_palette[i] = bstone::Rgba8U(
+            (255 * palette[0] / 63),
+            (255 * palette[1] / 63),
+            (255 * palette[2] / 63));
+    }
 }
 
 void JM_VGALinearFill(int start, int length, char fill)
@@ -2143,6 +2216,19 @@ void JM_VGALinearFill(int start, int length, char fill)
 
 void VL_RefreshScreen()
 {
-    ogl_refresh_screen();
+    //ogl_refresh_screen();
+
+    ::glClear(GL_COLOR_BUFFER_BIT);
+
+    g_draw_batch.draw();
+
+#if defined(BSTONE_PANDORA) // Pandora VSync
+    if (fbdev >= 0) {
+        int arg = 0;
+        ioctl(fbdev, FBIO_WAITFORVSYNC, &arg);
+    }
+#endif
+
+    ::SDL_GL_SwapWindow(sdl_window);
 }
 // BBi

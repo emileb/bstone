@@ -1227,6 +1227,8 @@ void CA_CacheGrChunk (Sint16 chunk)
 ======================
 */
 
+// FIXME
+#if 0
 void CA_CacheScreen (Sint16 chunk)
 {
 	Sint32	pos,compressed,expanded;
@@ -1262,6 +1264,21 @@ void CA_CacheScreen (Sint16 chunk)
 
     delete [] bigbufferseg;
     bigbufferseg = NULL;
+}
+#endif // 0
+
+void CA_CacheScreen(
+    Sint16 chunk)
+{
+    ::CA_CacheGrChunk(chunk);
+
+    bstone::Background* bg = ::g_resources.get_backgrounds().add(chunk);
+
+    bstone::DrawBatchCommand command;
+    command.type = bstone::DBCT_BACKGROUND;
+    command.background = bg;
+
+    ::g_draw_batch.add_command(command);
 }
 
 //==========================================================================

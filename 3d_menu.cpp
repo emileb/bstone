@@ -1,5 +1,7 @@
 #include "3d_def.h"
 
+#include <stack>
+
 #include "jm_lzh.h"
 
 #ifdef MSVC
@@ -22,8 +24,26 @@ boolean LoadTheGame(int handle);
 boolean IN_CheckAck();
 
 // BBi
+namespace {
+
+int routine_group = -1;
+int custom_gun_group = -1;
+std::stack<int> gun_groups_stack;
+
+int ctrl_main_group = -1;
+int ctrl_cursor_group = -1;
+int ctrl_subcursor_group = -1;
+int ctrl_subchar_group = -1;
+int ctrl_mouse_buttons_groups[4];
+int ctrl_joystick_buttons_groups[4];
+int ctrl_keyboard1_buttons_groups[4];
+int ctrl_keyboard2_buttons_groups[4];
+
+} // namespace
+
 bool LoadTheGame(
     bstone::IStream* stream);
+// BBi
 
 // As is, this switch will not work ... the data associated with this
 // is not saved out correctly.
@@ -380,6 +400,9 @@ void HelpScreens()
 //-------------------------------------------------------------------------
 // HelpPresenter()
 //-------------------------------------------------------------------------
+
+// FIXME
+#if 0
 void HelpPresenter(const char *fname,boolean continue_keys, Uint16 id_cache, boolean startmusic)
 {
 	#define FULL_VIEW_WIDTH			19
@@ -446,6 +469,87 @@ void HelpPresenter(const char *fname,boolean continue_keys, Uint16 id_cache, boo
 	if (startmusic && TPscan==sc_Escape)
 		StartCPMusic(MENUSONG);
 	IN_ClearKeysDown();
+}
+#endif // 0
+
+void HelpPresenter(
+    const char* fname,
+    boolean continue_keys,
+    Uint16 id_cache,
+    boolean startmusic)
+{
+    const int FULL_VIEW_WIDTH = 19;
+
+    PresenterInfo pi;
+    Sint16 oldwidth;
+
+    ::memset(&pi, 0, sizeof(pi));
+
+    pi.flags = TPF_SHOW_PAGES;
+
+    if (continue_keys)
+        pi.flags |= TPF_CONTINUE;
+
+    VW_FadeOut();
+
+    ::g_draw_batch.clear();
+    ::g_draw_batch.add_group();
+
+    // Change view size to MAX! (scaler clips shapes on smaller views)
+    //
+    oldwidth = viewwidth / 16;
+
+    if (oldwidth != FULL_VIEW_WIDTH)
+        ::NewViewSize(FULL_VIEW_WIDTH);
+
+    // Draw help border
+    //
+    ::CacheLump(H_TOPWINDOWPIC, H_BOTTOMINFOPIC);
+    ::VWB_DrawPic(0, 0, H_TOPWINDOWPIC);
+    ::VWB_DrawPic(0, 8, H_LEFTWINDOWPIC);
+    ::VWB_DrawPic(312, 8, H_RIGHTWINDOWPIC);
+    ::VWB_DrawPic(8, 176, H_BOTTOMINFOPIC);
+    ::UnCacheLump(H_TOPWINDOWPIC, H_BOTTOMINFOPIC);
+
+    // Setup for text presenter
+    //
+    pi.xl = 8;
+    pi.yl = 8;
+    pi.xh = 311;
+    pi.yh = 175;
+    pi.ltcolor = 0x7b;
+    pi.bgcolor = 0x7d;
+    pi.dkcolor = 0x7f;
+    pi.shcolor = 0x00;
+    pi.fontnumber = 4;
+
+    if (continue_keys)
+        pi.infoline = " UP / DN - PAGES       ENTER - CONTINUES         ESC - EXITS";
+    else
+        pi.infoline = "           UP / DN - PAGES            ESC - EXITS";
+
+    if (startmusic)
+        StartCPMusic(TEXTSONG);
+
+    // Load, present, and free help text.
+    //
+    ::TP_LoadScript(fname, &pi, id_cache);
+    ::TP_Presenter(&pi);
+    ::TP_FreeScript(&pi, id_cache);
+
+    MenuFadeOut();
+
+    // Reset view size
+    //
+    if (oldwidth != FULL_VIEW_WIDTH)
+        ::NewViewSize(oldwidth);
+
+    if (startmusic && TPscan == sc_Escape)
+        ::StartCPMusic(MENUSONG);
+
+    ::IN_ClearKeysDown();
+
+    ::g_draw_batch.clear();
 }
 
 //--------------------------------------------------------------------------
@@ -593,6 +697,9 @@ void US_ControlPanel(Uint8 scancode)
 //--------------------------------------------------------------------------
 // DrawMainMenu(void)
 //--------------------------------------------------------------------------
+
+// FIXME
+#if 0
 void DrawMainMenu(void)
 {
 	ControlPanelFree();
@@ -622,6 +729,61 @@ void DrawMainMenu(void)
 	DrawMenu(&MainItems,&MainMenu[0]);
 
 	VW_UpdateScreen();
+}
+#endif // 0
+
+void DrawMainMenu(void)
+{
+    // BBi test
+#if 0
+    bstone::DrawBatchCommand command;
+    command.type = bstone::DBCT_SPRITE;
+    command.sprite = ::g_resources.get_sprites().add(25);
+    command.x = 0;
+    command.y = 0;
+
+    g_draw_batch.clear();
+    g_draw_batch.add_group();
+    g_draw_batch.add_command(command);
+
+    ::glClearColor(1.0F, 0.0F, 1.0F, 1.0F);
+
+    while (true) {
+        ::glClear(GL_COLOR_BUFFER_BIT);
+        g_draw_batch.draw();
+        ::SDL_GL_SwapWindow(sdl_window);
+        ::in_handle_events();
+    }
+#endif
+    // BBi test
+
+    ::g_draw_batch.clear();
+    ::g_draw_batch.add_group();
+
+    ::ControlPanelFree();
+    ::CA_CacheScreen(BACKGROUND_SCREENPIC);
+    ::ControlPanelAlloc();
+
+    ::ClearMScreen();
+    ::DrawMenuTitle("MAIN OPTIONS");
+    ::DrawInstructions(IT_STANDARD);
+
+    //
+    // CHANGE "MISSION" AND "DEMO"
+    //
+    if (ingame) {
+        ::strcpy(&MainMenu[MM_BACK_TO_DEMO].string[8], "MISSION");
+        MainMenu[MM_BACK_TO_DEMO].active = AT_READIT;
+    } else {
+        ::strcpy(&MainMenu[MM_BACK_TO_DEMO].string[8], "DEMO");
+        MainMenu[MM_BACK_TO_DEMO].active = AT_ENABLED;
+    }
+
+    fontnumber = 4; // COAL
+
+    ::DrawMenu(&MainItems, &MainMenu[0]);
+
+    ::VW_UpdateScreen();
 }
 
 //--------------------------------------------------------------------------
@@ -835,6 +997,11 @@ Sint16 CP_EndGame(void)
 //--------------------------------------------------------------------------
 void CP_ViewScores(Sint16)
 {
+    // BBi
+    ::g_draw_batch.clear();
+    ::g_draw_batch.add_group();
+    // BBi
+
 	fontnumber=4;
 	StartCPMusic(ROSTER_MUS);
 	DrawHighScores ();
@@ -846,6 +1013,10 @@ void CP_ViewScores(Sint16)
 
 	StartCPMusic(MENUSONG);
 	MenuFadeOut();
+
+    // BBi
+    ::g_draw_batch.clear();
+    // BBi
 }
 
 //--------------------------------------------------------------------------
@@ -953,6 +1124,8 @@ secondpart:
 //---------------------------------------------------------------------------
 // DrawMenuTitle() - Draws the menu title
 //---------------------------------------------------------------------------
+// FIXME
+#if 0
 void DrawMenuTitle(const char *title)
 {
 
@@ -976,6 +1149,34 @@ void DrawMenuTitle(const char *title)
 	FREEFONT(STARTFONT+3);
 
 }
+#endif // 0
+
+void DrawMenuTitle(
+    const char* title)
+{
+    bstone::DrawBatchCommand command;
+
+    ::fontnumber = 3;
+    ::CA_CacheGrChunk(STARTFONT + ::fontnumber);
+
+    ::PrintX = 32;
+    ::WindowX = 32;
+    ::PrintY = 32;
+    ::WindowY = 32;
+    ::WindowW = 244;
+    ::WindowH = 20;
+
+    SETFONTCOLOR(TERM_SHADOW_COLOR, TERM_BACK_COLOR);
+    ::US_PrintCentered(title);
+
+    ::WindowX = 32 - 1;
+    ::WindowY = 32 - 1;
+
+    SETFONTCOLOR(ENABLED_TEXT_COLOR, TERM_BACK_COLOR);
+    ::US_PrintCentered(title);
+
+    FREEFONT(STARTFONT + ::fontnumber);
+}
 
 //---------------------------------------------------------------------------
 // DrawInstructions() - Draws instructions centered at the bottom of
@@ -983,6 +1184,8 @@ void DrawMenuTitle(const char *title)
 //
 // NOTES: Orginal font number or font color is not maintained.
 //---------------------------------------------------------------------------
+// FIXME
+#if 0
 void DrawInstructions(inst_type Type)
 {
 	#define INSTRUCTIONS_Y_POS		154+10
@@ -1009,6 +1212,43 @@ void DrawInstructions(inst_type Type)
 
 	SETFONTCOLOR(INSTRUCTIONS_TEXT_COLOR,TERM_BACK_COLOR);
 	US_PrintCentered(instr[Type]);
+}
+#endif // 0
+
+namespace {
+
+const int INSTRUCTIONS_Y_POS = 154 + 10;
+
+} // namespace
+
+void DrawInstructions(
+    inst_type type)
+{
+    const char* instr[MAX_INSTRUCTIONS] = {
+        "UP/DN SELECTS - ENTER CHOOSES - ESC EXITS",
+        "PRESS ANY KEY TO CONTINUE",
+        "ENTER YOUR NAME AND PRESS ENTER",
+        "RT/LF ARROW SELECTS - ENTER CHOOSES"
+    };
+
+    fontnumber = 2;
+
+    ::WindowX = 48;
+    ::WindowY = INSTRUCTIONS_Y_POS;
+    ::WindowW = 236;
+    ::WindowH = 8;
+
+    ::VWB_Bar(::WindowX, ::WindowY - 1,
+        ::WindowW, ::WindowH, TERM_BACK_COLOR);
+
+    SETFONTCOLOR(TERM_SHADOW_COLOR, TERM_BACK_COLOR);
+    ::US_PrintCentered(instr[type]);
+
+    --::WindowX;
+    --::WindowY;
+
+    SETFONTCOLOR(INSTRUCTIONS_TEXT_COLOR, TERM_BACK_COLOR);
+    ::US_PrintCentered(instr[type]);
 }
 
 #if 0
@@ -1089,6 +1329,11 @@ void DrawEpisodePic(Sint16 w)
 //--------------------------------------------------------------------------
 void CP_GameOptions(Sint16)
 {
+    // BBi
+    ::g_draw_batch.clear();
+    ::g_draw_batch.add_group();
+    // BBi
+
 	Sint16 which;
 
 	CA_CacheScreen (BACKGROUND_SCREENPIC);
@@ -1102,6 +1347,11 @@ void CP_GameOptions(Sint16)
 
 		if (which != -1)
 		{
+            // BBi
+            ::g_draw_batch.clear();
+            ::g_draw_batch.add_group();
+            // BBi
+
 			DrawGopMenu();
 			MenuFadeIn();
 		}
@@ -1109,6 +1359,10 @@ void CP_GameOptions(Sint16)
 	} while(which>=0);
 
 	MenuFadeOut();
+
+    // BBi
+    ::g_draw_batch.clear();
+    // BBi
 }
 
 //--------------------------------------------------------------------------
@@ -1152,6 +1406,11 @@ void ChangeSwaps(void)
 //--------------------------------------------------------------------------
 void CP_Switches(Sint16)
 {
+    // BBi
+    ::g_draw_batch.clear();
+    ::g_draw_batch.add_group();
+    // BBi
+
 	Sint16 which;
 
 	CA_CacheScreen (BACKGROUND_SCREENPIC);
@@ -1193,6 +1452,10 @@ void CP_Switches(Sint16)
 	} while(which>=0);
 
 	MenuFadeOut();
+
+    // BBi
+    ::g_draw_batch.clear();
+    // BBi
 }
 
 //--------------------------------------------------------------------------
@@ -1303,9 +1566,19 @@ void DrawSwitchDescription(Sint16 which)
 //--------------------------------------------------------------------------
 void CP_Sound(Sint16)
 {
+    // BBi
+    ::g_draw_batch.clear();
+    ::g_draw_batch.add_group();
+    // BBi
+
 	Sint16 which;
 
 	CA_CacheScreen (BACKGROUND_SCREENPIC);
+
+    // BBi
+    ::g_draw_batch.add_group();
+    // BBi
+
  DrawSoundMenu();
  MenuFadeIn();
  WaitKeyUp();
@@ -1313,6 +1586,11 @@ void CP_Sound(Sint16)
  do
  {
   which=HandleMenu(&SndItems,&SndMenu[0],DrawAllSoundLights);
+
+    // BBi
+    ::g_draw_batch.clear_current_group();
+    // BBi
+
   //
   // HANDLE MENU CHOICES
   //
@@ -1413,6 +1691,10 @@ void CP_Sound(Sint16)
  } while(which>=0);
 
  MenuFadeOut();
+
+    // BBi
+ ::g_draw_batch.clear();
+    // BBi
 }
 
 //--------------------------------------------------------------------------
@@ -1625,6 +1907,11 @@ restart:
 Sint16 CP_LoadGame(
     Sint16 quick)
 {
+    // BBi
+    ::g_draw_batch.clear();
+    ::g_draw_batch.add_group();
+    // BBi
+
     Sint16 which;
     Sint16 exit = 0;
 
@@ -2021,11 +2308,20 @@ void CP_ExitOptions(Sint16)
 void CP_Control(Sint16)
 {
 
+    // BBi
+    ::g_draw_batch.clear();
+    ::g_draw_batch.add_group();
+    // BBi
+
 	enum {MOUSEENABLE,JOYENABLE,USEPORT2,PADENABLE,CALIBRATEJOY,MOUSESENS,CUSTOMIZE};	 
 
  	Sint16 which;
 
 	CA_CacheScreen (BACKGROUND_SCREENPIC);
+
+    // BBi
+    ::g_draw_batch.add_group();
+    // BBi
 
  DrawCtlScreen();
  MenuFadeIn();
@@ -2034,6 +2330,11 @@ void CP_Control(Sint16)
  do
  {
   which=HandleMenu(&CtlItems,&CtlMenu[0],NULL);
+
+    // BBi
+  ::g_draw_batch.clear_current_group();
+    // BBi
+
   switch(which)
   {
    case MOUSEENABLE:
@@ -2087,6 +2388,10 @@ void CP_Control(Sint16)
  } while(which>=0);
 
  MenuFadeOut();
+
+    // BBi
+ ::g_draw_batch.clear();
+    // BBi
 }
 
 //--------------------------------------------------------------------------
@@ -2094,9 +2399,18 @@ void CP_Control(Sint16)
 //--------------------------------------------------------------------------
 void DrawMousePos(void)
 {
+    // BBi
+    ::g_draw_batch.set_next_group();
+    ::g_draw_batch.clear_current_group();
+    // BBi
+
 	VWB_Bar(74,92,160,8,HIGHLIGHT_BOX_COLOR);
 	DrawOutline(73,91,161,9,ENABLED_TEXT_COLOR,ENABLED_TEXT_COLOR);
 	VWB_Bar(74+160/10*mouseadjustment,92,16,8,HIGHLIGHT_TEXT_COLOR);
+
+    // BBi
+    ::g_draw_batch.set_prev_group();
+    // BBi
 }
 
 void DrawMouseSens(void)
@@ -2162,6 +2476,12 @@ void CalibrateJoystick(void)
 //--------------------------------------------------------------------------
 void MouseSensitivity(Sint16)
 {
+    // BBi
+    int main_group = ::g_draw_batch.add_group();
+    int pos_group = ::g_draw_batch.add_group();
+    ::g_draw_batch.set_current_group(main_group);
+    // BBi
+
 	ControlInfo ci;
 	Sint16 exit=0,oldMA;
 
@@ -2258,6 +2578,11 @@ void MouseSensitivity(Sint16)
 
 	WaitKeyUp();
 	MenuFadeOut();
+
+    // BBi
+    ::g_draw_batch.remove_group(pos_group);
+    ::g_draw_batch.remove_group(main_group);
+    // BBi
 }
 
 //--------------------------------------------------------------------------
@@ -2336,7 +2661,11 @@ void DrawCtlScreen(void)
 				break;
 			}
 
+// FIXME
+#if 0
 	DrawMenuGun(&CtlItems);
+#endif // 0
+
 	VW_UpdateScreen();
 }
 
@@ -2355,12 +2684,35 @@ char mbarray[4][3]={"B0","B1","B2","B3"},
 //--------------------------------------------------------------------------
 void CustomControls(Sint16)
 {
+    // BBi
+    ctrl_main_group = ::g_draw_batch.add_group();
+    ctrl_cursor_group = ::g_draw_batch.add_group();
+    ctrl_subcursor_group = ::g_draw_batch.add_group();
+    ctrl_subchar_group = ::g_draw_batch.add_group();
+
+    for (int i = 0; i < 4; ++i)
+        ctrl_mouse_buttons_groups[i] = ::g_draw_batch.add_group();
+
+    for (int i = 0; i < 4; ++i)
+        ctrl_joystick_buttons_groups[i] = ::g_draw_batch.add_group();
+
+    for (int i = 0; i < 4; ++i)
+        ctrl_keyboard1_buttons_groups[i] = ::g_draw_batch.add_group();
+
+    for (int i = 0; i < 4; ++i)
+        ctrl_keyboard2_buttons_groups[i] = ::g_draw_batch.add_group();
+    // BBi
+
 	Sint16 which;
 
  DrawCustomScreen();
 
  do
  {
+    // BBi
+     custom_gun_group = ctrl_cursor_group;
+    // BBi
+
   which=HandleMenu(&CusItems,&CusMenu[0],FixupCustom);
 
   switch(which)
@@ -2389,6 +2741,25 @@ void CustomControls(Sint16)
 
 
  MenuFadeOut();
+
+    // BBi
+    ::g_draw_batch.remove_group(ctrl_main_group);
+    ::g_draw_batch.remove_group(ctrl_cursor_group);
+    ::g_draw_batch.remove_group(ctrl_subcursor_group);
+    ::g_draw_batch.remove_group(ctrl_subchar_group);
+
+    for (int i = 0; i < 4; ++i)
+        ::g_draw_batch.remove_group(ctrl_mouse_buttons_groups[i]);
+
+    for (int i = 0; i < 4; ++i)
+        ::g_draw_batch.remove_group(ctrl_joystick_buttons_groups[i]);
+
+    for (int i = 0; i < 4; ++i)
+        ::g_draw_batch.remove_group(ctrl_keyboard1_buttons_groups[i]);
+
+    for (int i = 0; i < 4; ++i)
+        ::g_draw_batch.remove_group(ctrl_keyboard2_buttons_groups[i]);
+    // BBi
 }
 
 //--------------------------------------------------------------------------
@@ -2470,6 +2841,8 @@ enum ControlButton2 {
 
 Sint16 moveorder[4]={LEFT,RIGHT,FWRD,BKWD};
 
+// FIXME
+#if 0
 void EnterCtrlData(Sint16 index,CustomCtrls *cust,void (*DrawRtn)(Sint16),void (*PrintRtn)(Sint16),Sint16 type)
 {
 	Sint16 j,exit,tick,redraw,which = 0,x = 0,picked;
@@ -2811,6 +3184,383 @@ void EnterCtrlData(Sint16 index,CustomCtrls *cust,void (*DrawRtn)(Sint16),void (
 
  WaitKeyUp();
 }
+#endif // 0
+
+void EnterCtrlData(
+    Sint16 index,
+    CustomCtrls* cust,
+    void (*DrawRtn)(Sint16),
+    void (*PrintRtn)(Sint16),
+    Sint16 type)
+{
+    ::g_draw_batch.enable_group(ctrl_cursor_group, false);
+    ::g_draw_batch.enable_group(ctrl_subcursor_group, true);
+    ::g_draw_batch.enable_group(ctrl_subchar_group, false);
+
+    Sint16 j;
+    Sint16 exit;
+    Sint16 tick;
+    Sint16 redraw;
+    Sint16 which = 0;
+    Sint16 x = 0;
+    Sint16 picked;
+    ControlInfo ci;
+    bool clean_display = true;
+
+    ShootSnd();
+    PrintY = CST_Y + (13 * index);
+    IN_ClearKeysDown();
+    exit = 0;
+    redraw = 1;
+
+    CA_CacheGrChunk(STARTFONT + fontnumber);
+
+    //
+    // FIND FIRST SPOT IN ALLOWED ARRAY
+    //
+    for (j = 0; j < 4; ++j) {
+        if (cust->allowed[j]) {
+            which = j;
+            break;
+        }
+    }
+
+    do {
+        if (redraw) {
+            x = CST_START + (CST_SPC * which);
+            DrawRtn(1);
+
+            ::g_draw_batch.set_current_group(ctrl_subcursor_group);
+            ::g_draw_batch.clear_current_group();
+
+            VWB_Bar(x - 1, PrintY - 1, CST_SPC, 7, HIGHLIGHT_BOX_COLOR);
+            SETFONTCOLOR(HIGHLIGHT_TEXT_COLOR, HIGHLIGHT_BOX_COLOR);
+            PrintRtn(which);
+            PrintX = x;
+            SETFONTCOLOR(HIGHLIGHT_TEXT_COLOR, TERM_BACK_COLOR);
+            VW_UpdateScreen();
+            WaitKeyUp();
+            redraw = 0;
+        }
+
+        ReadAnyControl(&ci);
+
+        if (type == MOUSE || type == JOYSTICK) {
+            if (IN_KeyDown(sc_Enter) || IN_KeyDown(sc_Control) ||
+                IN_KeyDown(sc_Alt))
+            {
+                IN_ClearKeysDown();
+                ci.button0 = false;
+                ci.button1 = false;
+            }
+        }
+
+        //
+        // CHANGE BUTTON VALUE?
+        //
+
+        if ((ci.button0 | ci.button1 | ci.button2 | ci.button3) ||
+            ((type == KEYBOARDBTNS || type == KEYBOARDMOVE) &&
+                LastScan == sc_Enter))
+        {
+            tick = 0;
+            TimeCount = 0;
+            picked = 0;
+            SETFONTCOLOR(HIGHLIGHT_TEXT_COLOR, HIGHLIGHT_BOX_COLOR);
+
+            ::g_draw_batch.set_current_group(ctrl_subcursor_group);
+            ::g_draw_batch.clear_current_group();
+
+            ::VWB_Bar(x - 1, PrintY - 1, CST_SPC, 7, HIGHLIGHT_BOX_COLOR);
+
+            ::g_draw_batch.set_current_group(ctrl_subchar_group);
+            ::g_draw_batch.enable_group(false);
+
+            PrintX = x;
+            US_Print("?");
+
+            int* groups = NULL;
+
+            switch (index) {
+            case 2:
+                groups = ctrl_mouse_buttons_groups;
+                break;
+
+            case 5:
+                groups = ctrl_joystick_buttons_groups;
+                break;
+
+            case 8:
+                groups = ctrl_keyboard1_buttons_groups;
+                break;
+
+            case 10:
+                groups = ctrl_keyboard2_buttons_groups;
+                break;
+
+            default:
+                throw std::invalid_argument("groups");
+            }
+
+            ::g_draw_batch.enable_group(groups[which], false);
+
+            do {
+                Sint16 button;
+                Sint16 result = 0;
+
+                if (type == KEYBOARDBTNS || type == KEYBOARDMOVE)
+                    IN_ClearKeysDown();
+
+                // BBi
+                ::in_handle_events();
+
+                //
+                // FLASH CURSOR
+                //
+
+                if (TimeCount > 10) {
+                    switch (tick) {
+                    case 0:
+                    //    VWB_Bar(x - 1, PrintY - 1, CST_SPC, 7, HIGHLIGHT_BOX_COLOR);
+                        ::g_draw_batch.enable_group(false);
+                        break;
+
+                    case 1:
+                        ::g_draw_batch.enable_group(true);
+
+                        //PrintX = x;
+                        //US_Print("?");
+
+                        ::sd_play_player_sound(
+                            HITWALLSND, bstone::AC_ITEM);
+                    }
+
+                    tick ^= 1;
+                    TimeCount = 0;
+                    VW_UpdateScreen();
+                }
+
+                //
+                // WHICH TYPE OF INPUT DO WE PROCESS?
+                //
+
+                switch(type) {
+                case MOUSE:
+                    Mouse(3);
+// FIXME
+#if 0
+                    button=_BX;
+#endif // 0
+
+                    button = 0;
+
+                    switch (button) {
+                    case 1:
+                        result = 1;
+                        break;
+
+                    case 2:
+                        result = 2;
+                        break;
+
+                    case 4:
+                        result = 3;
+                        break;
+
+                    default:
+                        break;
+                    }
+
+                    if (result) {
+                        Sint16 z;
+
+                        for (z = 0; z < 4; ++z) {
+                            if (order[which] == buttonmouse[z]) {
+                                buttonmouse[z] = bt_nobutton;
+                                break;
+                            }
+                        }
+
+                        buttonmouse[result - 1] = order[which];
+                        picked = 1;
+
+                        ::sd_play_player_sound(
+                            SHOOTDOORSND, bstone::AC_ITEM);
+
+                        clean_display = false;
+                    }
+                    break;
+
+                case JOYSTICK:
+                    if (ci.button0)
+                        result = 1;
+                    else if (ci.button1)
+                        result = 2;
+                    else if (ci.button2)
+                        result = 3;
+                    else if (ci.button3)
+                        result = 4;
+
+                    if (result) {
+                        Sint16 z;
+
+                        for (z = 0; z < 4; ++z) {
+                            if (order[which] == buttonjoy[z]) {
+                                buttonjoy[z]=bt_nobutton;
+                                break;
+                            }
+                        }
+
+                        buttonjoy[result - 1] = order[which];
+                        picked = 1;
+
+                        ::sd_play_player_sound(SHOOTDOORSND, bstone::AC_ITEM);
+
+                        clean_display = false;
+                    }
+                    break;
+
+                case KEYBOARDBTNS:
+                    if (LastScan) {
+                        if (LastScan == sc_Escape)
+                            break;
+
+                        if (memchr(special_keys, LastScan, sizeof(special_keys)))
+                            ::sd_play_player_sound(NOWAYSND, bstone::AC_ITEM);
+                        else {
+                            clean_display = TestForValidKey(LastScan);
+
+                            if (clean_display)
+                                ShootSnd();
+
+                            buttonscan[static_cast<int>(order[which])] = LastScan;
+                            picked = 1;
+                        }
+
+                        IN_ClearKeysDown();
+                    }
+                    break;
+
+                case KEYBOARDMOVE:
+                    if (LastScan) {
+                        if (LastScan == sc_Escape)
+                            break;
+
+                        if (memchr(special_keys, LastScan, sizeof(special_keys)))
+                            ::sd_play_player_sound(NOWAYSND, bstone::AC_ITEM);
+                        else {
+                            clean_display = TestForValidKey(LastScan);
+
+                            if (clean_display)
+                                ShootSnd();
+
+                            dirscan[moveorder[which]] = LastScan;
+                            picked = 1;
+                        }
+
+                        IN_ClearKeysDown();
+                    }
+                    break;
+                }
+
+                //
+                // EXIT INPUT?
+                //
+
+                if (IN_KeyDown(sc_Escape)) {
+                    picked = 1;
+                    continue;
+                }
+            } while (!picked);
+
+            ::g_draw_batch.enable_group(groups[which], true);
+
+            if (!clean_display)
+                DrawCustomScreen();
+
+            SETFONTCOLOR(HIGHLIGHT_TEXT_COLOR, TERM_BACK_COLOR);
+            redraw = 1;
+            WaitKeyUp();
+            continue;
+        }
+
+        if (ci.button1 || IN_KeyDown(sc_Escape))
+            exit = 1;
+
+        //
+        // MOVE TO ANOTHER SPOT?
+        //
+        switch (ci.dir) {
+        case dir_West:
+            ::g_draw_batch.set_current_group(ctrl_subchar_group);
+            ::g_draw_batch.clear_current_group();
+
+            VWB_Bar(x - 1, PrintY - 1, CST_SPC, 7, TERM_BACK_COLOR);
+            SETFONTCOLOR(HIGHLIGHT_TEXT_COLOR, TERM_BACK_COLOR);
+            PrintRtn(which);
+
+            do {
+                --which;
+
+                if (which < 0)
+                    which = 3;
+            } while (!cust->allowed[which]);
+
+            redraw = 1;
+
+            ::sd_play_player_sound(MOVEGUN1SND, bstone::AC_ITEM);
+
+            while (ReadAnyControl(&ci), ci.dir != dir_None)
+                ;
+
+            IN_ClearKeysDown();
+            break;
+
+
+        case dir_East:
+            ::g_draw_batch.set_current_group(ctrl_subchar_group);
+            ::g_draw_batch.clear_current_group();
+
+            VWB_Bar(x - 1, PrintY - 1, CST_SPC, 7, TERM_BACK_COLOR);
+            SETFONTCOLOR(HIGHLIGHT_TEXT_COLOR, TERM_BACK_COLOR);
+            PrintRtn(which);
+
+            do {
+                ++which;
+
+                if (which > 3)
+                    which = 0;
+            } while (!cust->allowed[which]);
+
+            redraw = 1;
+
+            ::sd_play_player_sound(MOVEGUN1SND, bstone::AC_ITEM);
+
+            while (ReadAnyControl(&ci), ci.dir != dir_None)
+                ;
+
+            IN_ClearKeysDown();
+            break;
+
+        case dir_North:
+        case dir_South:
+            exit = 1;
+
+        default:
+            break;
+        }
+    } while (!exit);
+
+    FREEFONT(STARTFONT + fontnumber);
+
+    ::sd_play_player_sound(ESCPRESSEDSND, bstone::AC_ITEM);
+
+    WaitKeyUp();
+
+    ::g_draw_batch.enable_group(ctrl_cursor_group, true);
+    ::g_draw_batch.enable_group(ctrl_subcursor_group, false);
+    ::g_draw_batch.enable_group(ctrl_subchar_group, false);
+}
 
 
 //--------------------------------------------------------------------------
@@ -2850,6 +3600,11 @@ void FixupCustom(Sint16 w)
 //---------------------------------------------------------------------------
 void DrawCustomScreen(void)
 {
+    // BBi
+    ::g_draw_batch.set_current_group(ctrl_main_group);
+    ::g_draw_batch.clear_current_group();
+    // BBi
+
 	Sint16 i;
 
 	ClearMScreen();
@@ -2892,7 +3647,6 @@ void DrawCustomScreen(void)
 	ShadowPrint("FWRD",CST_START+CST_SPC*2,135);
 	ShadowPrint("BKWRD",CST_START+CST_SPC*3,135);
 
-
 	DrawCustMouse(0);
 	DrawCustJoy(0);
 	DrawCustKeybd(0);
@@ -2919,6 +3673,11 @@ void DrawCustomScreen(void)
 //---------------------------------------------------------------------------
 void PrintCustMouse(Sint16 i)
 {
+    // BBi
+    ::g_draw_batch.set_current_group(ctrl_mouse_buttons_groups[i]);
+    ::g_draw_batch.clear_current_group();
+    // BBi
+
 	Sint16 j;
 
 	for (j=0;j<4;j++)
@@ -2966,6 +3725,11 @@ void DrawCustMouse(Sint16 hilight)
 //---------------------------------------------------------------------------
 void PrintCustJoy(Sint16 i)
 {
+    // BBi
+    ::g_draw_batch.set_current_group(ctrl_joystick_buttons_groups[i]);
+    ::g_draw_batch.clear_current_group();
+    // BBi
+
 	Sint16 j;
 
 	for (j=0;j<4;j++)
@@ -3012,6 +3776,11 @@ void DrawCustJoy(Sint16 hilight)
 //---------------------------------------------------------------------------
 void PrintCustKeybd(Sint16 i)
 {
+    // BBi
+    ::g_draw_batch.set_current_group(ctrl_keyboard1_buttons_groups[i]);
+    ::g_draw_batch.clear_current_group();
+    // BBi
+
 	PrintX=CST_START+CST_SPC*i;
 	US_Print(reinterpret_cast<char*>(IN_GetScanName(static_cast<ScanCode>(buttonscan[static_cast<int>(order[i])]))));
 }
@@ -3047,6 +3816,11 @@ void DrawCustKeybd(Sint16 hilight)
 //---------------------------------------------------------------------------
 void PrintCustKeys(Sint16 i)
 {
+    // BBi
+    ::g_draw_batch.set_current_group(ctrl_keyboard2_buttons_groups[i]);
+    ::g_draw_batch.clear_current_group();
+    // BBi
+
 	PrintX=CST_START+CST_SPC*i;
 	US_Print(reinterpret_cast<char*>(IN_GetScanName(static_cast<ScanCode>(dirscan[moveorder[i]]))));
 }
@@ -3077,6 +3851,9 @@ void DrawCustKeys(Sint16 hilight)
 //---------------------------------------------------------------------------
 // CP_ChangeView()
 //---------------------------------------------------------------------------
+
+// FIXME
+#if 0
 void CP_ChangeView(Sint16)
 {
  Sint16 exit=0,oldview,newview,lastview;
@@ -3177,6 +3954,101 @@ void CP_ChangeView(Sint16)
  ShootSnd();
  MenuFadeOut();
 }
+#endif // 0
+
+void CP_ChangeView(Sint16)
+{
+    ::g_draw_batch.clear();
+    ::g_draw_batch.add_group();
+
+    Sint16 exit = 0;
+    Sint16 oldview;
+    Sint16 newview;
+    Sint16 lastview;
+    ControlInfo ci;
+
+    ::WindowX = 0;
+    ::WindowY = 0;
+    ::WindowW = 320;
+    ::WindowH = 200;
+    lastview = ::viewwidth / 16;
+    newview = lastview;
+    oldview = lastview;
+    ::DrawChangeView(oldview);
+
+    int view_group = ::g_draw_batch.add_group();
+
+    do {
+        ::CheckPause();
+        ::ReadAnyControl(&ci);
+
+        switch(ci.dir) {
+        case dir_South:
+        case dir_West:
+            --newview;
+
+            if (newview < 6)
+                newview = 6;
+
+            ::g_draw_batch.clear_current_group();
+            ::ShowViewSize(newview);
+            ::VW_UpdateScreen();
+
+            if (newview != lastview)
+                ::sd_play_player_sound(HITWALLSND, bstone::AC_ITEM);
+
+            ::TicDelay(10);
+            lastview = newview;
+            break;
+
+        case dir_North:
+        case dir_East:
+            ++newview;
+
+            if (newview > 20)
+                newview = 20;
+
+            ::g_draw_batch.clear_current_group();
+            ::ShowViewSize(newview);
+            ::VW_UpdateScreen();
+
+            if (newview != lastview)
+                ::sd_play_player_sound(HITWALLSND, bstone::AC_ITEM);
+
+            ::TicDelay(10);
+            lastview = newview;
+            break;
+
+        default:
+            break;
+        }
+
+        if (ci.button0 || ::Keyboard[sc_Enter])
+            exit = 1;
+        else {
+            if (ci.button1 || ::Keyboard[sc_Escape]) {
+                ::viewwidth = oldview * 16;
+                ::sd_play_player_sound(ESCPRESSEDSND, bstone::AC_ITEM);
+                ::MenuFadeOut();
+                return;
+            }
+        }
+    } while (!exit);
+
+    ::ControlPanelFree();
+
+    if (oldview != newview) {
+        ::sd_play_player_sound(SHOOTSND, bstone::AC_ITEM);
+        ::g_draw_batch.clear_current_group();
+        ::Message(Computing);
+        ::NewViewSize(newview);
+    }
+
+    ::ControlPanelAlloc();
+
+    ::ShootSnd();
+    ::MenuFadeOut();
+}
 
 //---------------------------------------------------------------------------
 // DrawChangeView()
@@ -3219,9 +4091,17 @@ void CP_Quit(void)
 //---------------------------------------------------------------------------
 // Clear Menu screens to dark red
 //---------------------------------------------------------------------------
+// FIXME
+#if 0
 void ClearMScreen(void)
 {
 	VWB_Bar(SCREEN_X,SCREEN_Y,SCREEN_W,SCREEN_H,TERM_BACK_COLOR);
+}
+#endif // 0
+
+void ClearMScreen()
+{
+    ::VWB_Bar(SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, TERM_BACK_COLOR);
 }
 
 
@@ -3416,6 +4296,9 @@ void ControlPanelAlloc(void)
 //
 // NOTE: Font MUST already be loaded
 //---------------------------------------------------------------------------
+
+// FIXME
+#if 0
 void ShadowPrint(const char *strng,Sint16 x, Sint16 y)
 {
 	Sint16 old_bc,old_fc;
@@ -3434,10 +4317,34 @@ void ShadowPrint(const char *strng,Sint16 x, Sint16 y)
 	SETFONTCOLOR(old_fc,old_bc);
 	US_Print(strng);
 }
+#endif // 0
+
+void ShadowPrint(
+    const char* string,
+    Sint16 x,
+    Sint16 y)
+{
+    int old_fc = fontcolor;
+    int old_bc = backcolor;
+
+    ::PrintX = x + 1;
+    ::PrintY = y + 1;
+
+    SETFONTCOLOR(TERM_SHADOW_COLOR, TERM_BACK_COLOR);
+    ::US_Print(string);
+
+    ::PrintX = x;
+    ::PrintY = y;
+    SETFONTCOLOR(old_fc, old_bc);
+    ::US_Print(string);
+}
 
 //---------------------------------------------------------------------------
 // HandleMenu() - Handle moving gun around a menu
 //---------------------------------------------------------------------------
+
+// FIXME
+#if 0
 Sint16 HandleMenu(CP_iteminfo *item_i,CP_itemtype *items,void (*routine)(Sint16 w))
 {
 	#define box_on 	item_i->cursor.on
@@ -3703,7 +4610,308 @@ Sint16 HandleMenu(CP_iteminfo *item_i,CP_itemtype *items,void (*routine)(Sint16 
 
 	return 0; // JUST TO SHUT UP THE ERROR MESSAGES!
 }
+#endif // 0
 
+Sint16 HandleMenu(
+    CP_iteminfo* item_i,
+    CP_itemtype* items,
+    void (*routine)(Sint16 w))
+{
+    char& box_on = item_i->cursor.on;
+
+    char key;
+    bool redrawitem = true;
+    bool is_custom_gun_group = false;
+
+    Sint16 i,x,y,basey,exit,which,flash_tics;
+    ControlInfo ci;
+
+    if (custom_gun_group >= 0) {
+        gun_groups_stack.push(custom_gun_group);
+        custom_gun_group = -1;
+        is_custom_gun_group = true;
+    } else
+        gun_groups_stack.push(::g_draw_batch.add_group());
+
+    routine_group = ::g_draw_batch.add_group();
+
+    which=item_i->curpos;
+    x=item_i->x;
+    basey=item_i->y;
+    y=basey+which*item_i->y_spacing;
+    box_on = 1;
+    DrawGun(item_i,items,x,&y,which,basey,routine);
+
+    SetTextColor(items+which,1);
+
+    if (redrawitem)
+    {
+        ShadowPrint((items+which)->string,item_i->x+item_i->indent,item_i->y+which*item_i->y_spacing);
+    }
+
+    //
+    // CALL CUSTOM ROUTINE IF IT IS NEEDED
+    //
+
+    if (routine) {
+        ::g_draw_batch.clear_group(routine_group);
+        ::g_draw_batch.set_current_group(routine_group);
+        routine(which);
+        ::g_draw_batch.set_current_group(gun_groups_stack.top());
+    }
+
+    VW_UpdateScreen();
+
+    flash_tics=40;
+    exit=0;
+    TimeCount=0;
+    IN_ClearKeysDown();
+
+    do
+    {
+        CalcTics();
+        flash_tics -= tics;
+
+        CycleColors();
+
+        //
+        // CHANGE GUN SHAPE
+        //
+
+        if (flash_tics <= 0)
+        {
+            flash_tics = 40;
+
+            box_on ^= 1;
+
+            if (box_on)
+                DrawGun(item_i,items,x,&y,which,basey,routine);
+            else
+            {
+                ::g_draw_batch.clear_group(gun_groups_stack.top());
+
+                if (routine) {
+                    ::g_draw_batch.clear_group(routine_group);
+                    ::g_draw_batch.set_current_group(routine_group);
+                    routine(which);
+                    ::g_draw_batch.set_current_group(gun_groups_stack.top());
+                }
+            }
+
+
+            VW_UpdateScreen();
+        }
+
+        CheckPause();
+
+
+        //
+        // SEE IF ANY KEYS ARE PRESSED FOR INITIAL CHAR FINDING
+        //
+
+        key=LastASCII;
+        if (key)
+        {
+            Sint16 ok=0;
+
+            if (key>='a')
+                key-='a'-'A';
+
+            for (i=which+1;i<item_i->amount;i++)
+                if ((items+i)->active && (items+i)->string[0]==key)
+                {
+                    ::g_draw_batch.clear_group(gun_groups_stack.top());
+                    which=i;
+                    item_i->curpos=static_cast<char>(which);			// jtr -testing
+                    box_on = 1;
+                    DrawGun(item_i,items,x,&y,which,basey,routine);
+                    VW_UpdateScreen();
+
+                    ok=1;
+                    IN_ClearKeysDown();
+                    break;
+                }
+
+                //
+                // DIDN'T FIND A MATCH FIRST TIME THRU. CHECK AGAIN.
+                //
+
+                if (!ok)
+                {
+                    for (i=0;i<which;i++)
+                        if ((items+i)->active && (items+i)->string[0]==key)
+                        {
+                            ::g_draw_batch.clear_group(gun_groups_stack.top());
+                            which=i;
+                            item_i->curpos=static_cast<char>(which);			// jtr -testing
+                            box_on = 1;
+                            DrawGun(item_i,items,x,&y,which,basey,routine);
+                            VW_UpdateScreen();
+
+                            IN_ClearKeysDown();
+                            break;
+                        }
+                }
+        }
+
+        //
+        // GET INPUT
+        //
+
+        ReadAnyControl(&ci);
+
+        switch(ci.dir)
+        {
+            //------------------------
+            // MOVE UP
+            //
+        case dir_North:
+            ::g_draw_batch.clear_group(gun_groups_stack.top());
+
+            do
+            {
+                if (!which)
+                    which=item_i->amount-1;
+                else
+                    which--;
+
+            } while(!(items+which)->active);
+
+            item_i->curpos=static_cast<char>(which);			// jtr -testing
+
+            box_on = 1;
+            DrawGun(item_i,items,x,&y,which,basey,routine);
+
+            VW_UpdateScreen();
+
+            TicDelay(20);
+            break;
+
+            //--------------------------
+            // MOVE DOWN
+            //
+        case dir_South:
+            ::g_draw_batch.clear_group(gun_groups_stack.top());
+
+            do
+            {
+                if (which==item_i->amount-1)
+                    which=0;
+                else
+                    which++;
+            } while(!(items+which)->active);
+
+            item_i->curpos=static_cast<char>(which);			// jtr -testing
+
+            box_on = 1;
+            DrawGun(item_i,items,x,&y,which,basey,routine);
+
+            VW_UpdateScreen();
+
+            TicDelay(20);
+            break;
+
+        default:
+            break;
+        }
+
+        if (ci.button0 ||	Keyboard[sc_Space] || Keyboard[sc_Enter])
+            exit=1;
+
+        if (ci.button1 || Keyboard[sc_Escape])
+            exit=2;
+
+    } while(!exit);
+
+    IN_ClearKeysDown();
+
+    //
+    // ERASE EVERYTHING
+    //
+
+    box_on = 0;
+    redrawitem=true;
+    ::g_draw_batch.clear_group(gun_groups_stack.top());
+
+    if (routine != NULL) {
+        ::g_draw_batch.clear_group(routine_group);
+        ::g_draw_batch.set_current_group(routine_group);
+        routine(which);
+        ::g_draw_batch.set_current_group(gun_groups_stack.top());
+    }
+
+    VW_UpdateScreen();
+
+    item_i->curpos=static_cast<char>(which);
+
+    switch(exit) {
+    case 1:
+        //
+        // CALL THE ROUTINE
+        //
+        if (items[which].routine != NULL) {
+            // Make sure there's room to save when CP_SaveGame() is called.
+            //
+            if (reinterpret_cast<size_t>(items[which].routine) == reinterpret_cast<size_t>(CP_SaveGame)) {
+                if (!CheckDiskSpace(DISK_SPACE_NEEDED,CANT_SAVE_GAME_TXT,cds_menu_print))
+                    return(which);
+            }
+
+            //
+            // ALREADY IN A GAME?
+            //
+            if (ingame && (items[which].routine == CP_NewGame)) {
+                if (!Confirm(CURGAME)) {
+                    MenuFadeOut();
+
+                    if (!is_custom_gun_group)
+                        ::g_draw_batch.remove_group(gun_groups_stack.top());
+
+                    gun_groups_stack.pop();
+
+                    ::g_draw_batch.remove_group(routine_group);
+                    return 0;
+                }
+            }
+
+            ShootSnd();
+            MenuFadeOut();
+
+            if (!is_custom_gun_group)
+                ::g_draw_batch.remove_group(gun_groups_stack.top());
+
+            gun_groups_stack.pop();
+
+            ::g_draw_batch.remove_group(routine_group);
+
+            items[which].routine(0);
+        }
+
+        return which;
+
+    case 2:
+        ::sd_play_player_sound(ESCPRESSEDSND, bstone::AC_ITEM);
+
+        if (!is_custom_gun_group)
+            ::g_draw_batch.remove_group(gun_groups_stack.top());
+
+        gun_groups_stack.pop();
+
+        ::g_draw_batch.remove_group(routine_group);
+        return -1;
+    }
+
+    if (!is_custom_gun_group)
+        ::g_draw_batch.remove_group(gun_groups_stack.top());
+
+    gun_groups_stack.pop();
+
+    ::g_draw_batch.remove_group(routine_group);
+    return 0; // JUST TO SHUT UP THE ERROR MESSAGES!
+}
+
+// FIXME
+#if 0
 //---------------------------------------------------------------------------
 // EraseGun() - ERASE GUN & DE-HIGHLIGHT STRING
 //---------------------------------------------------------------------------
@@ -3718,11 +4926,15 @@ void EraseGun(CP_iteminfo *item_i,CP_itemtype *items,Sint16 x,Sint16 y,Sint16 wh
 
  	x++;				// Shut up compiler
 }
+#endif // 0
 
 
 //---------------------------------------------------------------------------
 // DrawGun() - DRAW GUN AT NEW POSITION
 //---------------------------------------------------------------------------
+
+// FIXME
+#if 0
 void DrawGun(CP_iteminfo *item_i,CP_itemtype *items,Sint16 x,Sint16 *y,Sint16 which,Sint16 basey,void (*routine)(Sint16 w))
 {
 	*y=basey+which*item_i->y_spacing;
@@ -3743,6 +4955,47 @@ void DrawGun(CP_iteminfo *item_i,CP_itemtype *items,Sint16 x,Sint16 *y,Sint16 wh
 //	SD_PlaySound(MOVEGUN2SND);
 
 	x++;				// Shutup compiler
+}
+#endif // 0
+
+void DrawGun(
+    CP_iteminfo* item_i,
+    CP_itemtype* items,
+    Sint16 x,
+    Sint16* y,
+    Sint16 which,
+    Sint16 basey,
+    void (*routine)(Sint16 w))
+{
+    ::g_draw_batch.set_current_group(gun_groups_stack.top());
+    ::g_draw_batch.clear_current_group();
+
+    *y = basey + (which * item_i->y_spacing);
+
+    ::VWB_Bar(
+        item_i->cursor.x,
+        (*y) + item_i->cursor.y_ofs,
+        item_i->cursor.width,
+        item_i->cursor.height,
+        HIGHLIGHT_BOX_COLOR);
+
+    ::SetTextColor(items + which, 1);
+
+    ::ShadowPrint(
+        items[which].string,
+        item_i->x + item_i->indent,
+        item_i->y + (which * item_i->y_spacing));
+
+    //
+    // CALL CUSTOM ROUTINE IF IT IS NEEDED
+    //
+
+    if (routine != NULL) {
+        ::g_draw_batch.clear_group(routine_group);
+        ::g_draw_batch.set_current_group(routine_group);
+        routine(which);
+        ::g_draw_batch.set_current_group(gun_groups_stack.top());
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -3777,7 +5030,12 @@ void DrawMenu(CP_iteminfo *item_i,CP_itemtype *items)
 
 	for (i=0;i<item_i->amount;i++)
 	{
+        // FIXME
+#if 0
 		SetTextColor(items+i,which==i);
+#endif // 0
+        ::SetTextColor(items + i, false);
+
 		ShadowPrint((items+i)->string,WindowX,item_i->y+i*item_i->y_spacing);
 	}
 }
@@ -4062,6 +5320,9 @@ void ReadAnyControl(
 // DRAW DIALOG AND CONFIRM YES OR NO TO QUESTION
 //
 ////////////////////////////////////////////////////////////////////
+
+// FIXME
+#if 0
 Sint16 Confirm(const char *string)
 {
 	Sint16 xit=0,x,y,tick=0,whichsnd[2]={ESCPRESSEDSND,SHOOTSND};
@@ -4138,10 +5399,88 @@ Sint16 Confirm(const char *string)
 
 	return xit;
 }
+#endif // 0
+
+Sint16 Confirm(
+    const char* string)
+{
+    Sint16 xit = 0;
+    Sint16 x;
+    Sint16 y;
+    Sint16 tick = 0;
+    Sint16 whichsnd[2] = { ESCPRESSEDSND, SHOOTSND };
+
+    int message_group = ::g_draw_batch.add_group();
+
+    ::Message(string);
+
+    // Next two lines needed for flashing cursor ...
+    //
+    SETFONTCOLOR(BORDER_TEXT_COLOR, BORDER_MED_COLOR);
+    ::CA_CacheGrChunk(STARTFONT + fontnumber);
+
+    ::IN_ClearKeysDown();
+
+    //
+    // BLINK CURSOR
+    //
+
+    int cursor_group = ::g_draw_batch.add_group();
+
+    x = ::PrintX;
+    y = ::PrintY;
+    ::TimeCount = 0;
+
+    ::US_Print("_");
+
+    do {
+        if (::TimeCount >= 10) {
+            switch (tick) {
+            case 0:
+                ::g_draw_batch.enable_group(false);
+                break;
+
+            case 1:
+                ::g_draw_batch.enable_group(true);
+            }
+
+            VW_UpdateScreen();
+            tick ^= 1;
+            ::TimeCount = 0;
+        }
+
+        // BBi
+        ::IN_CheckAck();
+    } while (!Keyboard[sc_Y] && !Keyboard[sc_N] && !Keyboard[sc_Escape]);
+
+    if (Keyboard[sc_Y]) {
+        xit = 1;
+        ::ShootSnd();
+    }
+
+    while (Keyboard[sc_Y] || Keyboard[sc_N] || Keyboard[sc_Escape])
+        ::IN_CheckAck();
+
+    ::IN_ClearKeysDown();
+
+    ::sd_play_player_sound(
+        static_cast<soundnames>(whichsnd[xit]),
+        bstone::AC_ITEM);
+
+    FREEFONT(STARTFONT + fontnumber);
+
+    ::g_draw_batch.remove_group(cursor_group);
+    ::g_draw_batch.remove_group(message_group);
+
+    return xit;
+}
 
 //---------------------------------------------------------------------------
 // Message() - PRINT A MESSAGE IN A WINDOW
 //---------------------------------------------------------------------------
+
+// FIXME
+#if 0
 void Message(const char *string)
 {
 	Sint16 h=0,w=0,mw=0;
@@ -4193,7 +5532,64 @@ void Message(const char *string)
 
 	VW_UpdateScreen();
 }
+#endif // 0
 
+void Message(
+    const char* string)
+{
+    int h = 0;
+    int w = 0;
+    int mw = 0;
+    size_t i;
+    Uint16 OldPrintX;
+    Uint16 OldPrintY;
+
+    ::fontnumber = 1;
+    ::CA_CacheGrChunk(STARTFONT + 1);
+
+    bstone::Font* font = ::g_resources.get_fonts().add(::fontnumber);
+
+    font->measure_text(string, w, h);
+
+    if (w + 10 > mw)
+        mw = w + 10;
+
+    ::PrintY = (::WindowH / 2) - h / 2;
+    OldPrintY = ::PrintY;
+
+    ::WindowX = 160 - mw / 2;
+    ::PrintX = ::WindowX;
+    OldPrintX = ::PrintX;
+
+    // bump down and to right for shadow
+
+    ::PrintX++;
+    ::PrintY++;
+    ::WindowX++;
+
+    ::BevelBox(
+        ::WindowX - 6,
+        ::PrintY - 6,
+        mw + 10,
+        h + 10,
+        BORDER_HI_COLOR,
+        BORDER_MED_COLOR,
+        BORDER_LO_COLOR);
+
+    SETFONTCOLOR(BORDER_LO_COLOR, BORDER_MED_COLOR);
+    ::US_Print(string);
+
+    ::PrintY = OldPrintY;
+    ::PrintX = OldPrintX;
+    ::WindowX = ::PrintX;
+
+    SETFONTCOLOR(BORDER_TEXT_COLOR, BORDER_MED_COLOR);
+    ::US_Print(string);
+
+    FREEFONT(STARTFONT + 1);
+
+    VW_UpdateScreen();
+}
 
 
 //--------------------------------------------------------------------------

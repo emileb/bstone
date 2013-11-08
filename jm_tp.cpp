@@ -84,10 +84,20 @@
 
 
 
-void VWL_MeasureString (const char* string, Uint16* width, Uint16* height, fontstruct* font);
+void VWL_MeasureString(const char* string, int& width, int& height, int font_index);
 void VH_UpdateScreen();
 void ClearMemory (void);
 
+// BBi
+namespace {
+
+int page_number_group = -1;
+int page_group = -1;
+int anim_groups[TP_MAX_ANIMS];
+int cursor_group = -1;
+
+} // namespace
+// BBi
 
 //#define DRAW_TO_FRONT
 
@@ -552,6 +562,17 @@ static Sint16 pagex[2],pagey[2];
 //--------------------------------------------------------------------------
 void TP_Presenter(PresenterInfo *pinfo)
 {
+    // BBi
+    int parent_group = ::g_draw_batch.get_current_group();
+    page_number_group = ::g_draw_batch.add_group();
+    page_group = ::g_draw_batch.add_group();
+
+    for (int i = 0; i < TP_MAX_ANIMS; ++i)
+        anim_groups[i] = ::g_draw_batch.add_group();
+
+    cursor_group = ::g_draw_batch.add_group();
+    // BBi
+
 	pi=pinfo;
 	bgcolor = pi->bgcolor;
 	ltcolor = pi->ltcolor;
@@ -587,6 +608,10 @@ void TP_Presenter(PresenterInfo *pinfo)
     numanims = 0;
 	disp_str_num = -1;
 
+    // BBi
+    ::g_draw_batch.set_current_group(page_group);
+    // BBi
+
 	old_fontnumber=static_cast<char>(fontnumber);
 	fontnumber=pi->fontnumber;
 	TP_PurgeAllGfx();
@@ -600,6 +625,10 @@ void TP_Presenter(PresenterInfo *pinfo)
 //
 	if (pi->infoline)
 	{
+        // BBi
+        ::g_draw_batch.set_current_group(parent_group);
+        // BBi
+
 		char oldf=static_cast<char>(fontnumber),oldc=fontcolor;
 
 		px=xl;
@@ -619,7 +648,6 @@ void TP_Presenter(PresenterInfo *pinfo)
 			ShPrint("   OF ",static_cast<char>(shcolor),false);
 			pagex[1]=px;
 			pagey[1]=py;
-
 			TP_PrintPageNumber();
 		}
 
@@ -627,9 +655,17 @@ void TP_Presenter(PresenterInfo *pinfo)
 		fontnumber=oldf;
 	}
 
+    // BBi
+    ::g_draw_batch.set_current_group(parent_group);
+    // BBi
+
 	font = (fontstruct *)grsegs[STARTFONT+fontnumber];
 	if (!(pi->flags & TPF_USE_CURRENT))
 		VWB_Bar(xl-TP_MARGIN,yl-TP_MARGIN,xh-xl+1+(TP_MARGIN*2),yh-yl+1+(TP_MARGIN*2),bgcolor);
+
+    // BBi
+    ::g_draw_batch.set_current_group(page_group);
+    // BBi
 
 	if (pi->flags & TPF_SHOW_CURSOR)
 	{
@@ -745,9 +781,9 @@ void TP_WrapText()
 
 	if ((justify_mode == jm_right) && (!(flags & fl_center)))
 	{
-		Uint16 width,height;
+		int width,height;
 
-		VWL_MeasureString(first_ch,&width,&height,font);
+		VWL_MeasureString(first_ch,width,height,fontnumber);
 		cur_x = xh-width+1;
 		if (cur_x < xl)
 			cur_x = xl;
@@ -1419,6 +1455,7 @@ void TP_HandleCodes()
 #ifdef DRAW_TO_FRONT
 					bufferofs=displayofs;
 #endif
+
 					ReadAnyControl(&ci);
 
 					if (Keyboard[sc_PgUp])
@@ -1470,6 +1507,14 @@ void TP_HandleCodes()
 					}
 				}
 
+                // BBi
+                for (int i = 0; i < TP_MAX_ANIMS; ++i)
+                    ::g_draw_batch.clear_group(anim_groups[i]);
+
+                ::g_draw_batch.set_current_group(page_group);
+                ::g_draw_batch.clear_current_group();
+                // BBi
+
 				if (anim_bgcolor != -1)
 				{
 					bgcolor = old_bgcolor;
@@ -1512,6 +1557,9 @@ void TP_HandleCodes()
 //--------------------------------------------------------------------------
 // TP_PrintPageNumber()
 //--------------------------------------------------------------------------
+
+// FIXME
+#if 0
 void TP_PrintPageNumber()
 {
 	char buffer[5];
@@ -1543,6 +1591,44 @@ void TP_PrintPageNumber()
 
 	fontnumber=oldf;
 	fontcolor=oldc;
+}
+#endif // 0
+
+void TP_PrintPageNumber()
+{
+    if ((pi->flags & TPF_SHOW_PAGES) == 0)
+        return;
+
+    int last_group = ::g_draw_batch.get_current_group();
+    ::g_draw_batch.set_current_group(::page_number_group);
+    ::g_draw_batch.clear_current_group();
+
+    char buffer[5];
+    int oldf = ::fontnumber;
+    Uint8 oldc = ::fontcolor;
+
+    ::fontnumber = 2;
+    ::fontcolor = 0x39;
+
+    // Print current page number.
+    //
+    ::px = ::pagex[0];
+    ::py = ::pagey[0];
+    ::VW_Bar(::px, ::py, 12, 7, 0xe3);
+    ::sprintf(buffer, "%02d", ::pi->pagenum + 1);
+    ::ShPrint(buffer, static_cast<char>(shcolor), false);
+
+    // Print a number of pages.
+    //
+    ::px = ::pagex[1];
+    ::py = ::pagey[1];
+    ::sprintf(buffer, "%02d", ::pi->numpages);
+    ::ShPrint(buffer, static_cast<char>(shcolor), false);
+
+    ::fontnumber = oldf;
+    ::fontcolor = oldc;
+
+    ::g_draw_batch.set_current_group(last_group);
 }
 
 //--------------------------------------------------------------------------
@@ -1576,6 +1662,9 @@ Sint16 TP_DrawShape(Sint16 x, Sint16 y, Sint16 shapenum, pisType shapetype)
 		case pis_scwall:
 			TP_CacheIn(ct_scaled,0);
 			addr = PM_GetPage(shapenum);
+
+// FIXME
+#if 0
 			bufferofs += (y-30)*SCREENWIDTH;
 			postx = x;
 			postwidth = 1;
@@ -1586,6 +1675,15 @@ Sint16 TP_DrawShape(Sint16 x, Sint16 y, Sint16 shapenum, pisType shapetype)
 				FarScalePost();
 			}
 			bufferofs -= (y-30)*SCREENWIDTH;
+#endif // 0
+            {
+                bstone::DrawBatchCommand command;
+                command.type = bstone::DBCT_WALL;
+                command.wall = ::g_resources.get_walls().add(shapenum);
+                command.x = x;
+                command.y = y;
+                ::g_draw_batch.add_command(command);
+            }
 		break;
 
 		case pis_scaled:
@@ -1644,6 +1742,10 @@ void TP_AnimatePage(Sint16 numanims)
 	piAnimInfo *anim=piAnimList;
 	piShapeInfo *shape;
 
+    // BBi
+    int group_index = 0;
+    // BBi
+
 	while (numanims--)
 	{
 		anim->delay += tics;
@@ -1666,6 +1768,12 @@ void TP_AnimatePage(Sint16 numanims)
 				}
 			}
 
+            // BBi
+            ::g_draw_batch.set_current_group(
+                anim_groups[group_index]);
+            ::g_draw_batch.clear_current_group();
+            // BBi
+
 			switch (anim->animtype)
 			{
 				case pia_shapetable:
@@ -1680,6 +1788,10 @@ void TP_AnimatePage(Sint16 numanims)
 			}
 		}
 		anim++;
+
+        // BBi
+        ++group_index;
+        // BBi
 	}
 }
 

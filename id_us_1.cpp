@@ -63,7 +63,7 @@ boolean		US_Started;
 					CursorBad;
 		Sint16			CursorX,CursorY;
 
-		void		(*USL_MeasureString)(const char*, Uint16*, Uint16*) = VW_MeasurePropString,
+		void		(*USL_MeasureString)(const char*, int&, int&) = VW_MeasurePropString,
 					(*USL_DrawString)(const char*) = VWB_DrawPropString;
 
 		SaveGame	Games[MaxSaveGames];
@@ -174,7 +174,7 @@ US_Print(const char *s)
 
 	char	c;
 	const char *se;
-	Uint16	w,h;
+	int	w,h;
 
 	while (*s)
 	{
@@ -183,7 +183,7 @@ US_Print(const char *s)
 			se++;
 		*(char*)se = '\0';
 
-		USL_MeasureString(s,&w,&h);
+		USL_MeasureString(s,w,h);
 		px = PrintX;
 		py = PrintY;
 		USL_DrawString(s);
@@ -240,10 +240,10 @@ US_PrintSigned(Sint32 n)
 void
 USL_PrintInCenter(const char *s,Rect r)
 {
-	Uint16	w,h,
+	int	w,h,
 			rw,rh;
 
-	USL_MeasureString(s,&w,&h);
+	USL_MeasureString(s,w,h);
 	rw = r.lr.x - r.ul.x;
 	rh = r.lr.y - r.ul.y;
 
@@ -279,9 +279,9 @@ US_PrintCentered(const char *s)
 void
 US_CPrintLine(const char *s)
 {
-	Uint16	w,h;
+	int	w,h;
 
-	USL_MeasureString(s,&w,&h);
+	USL_MeasureString(s,w,h);
 
 	if (w > WindowW)
 		US1_ERROR(US_CPRINTLINE_WIDTH);
@@ -437,11 +437,11 @@ USL_XORICursor(Sint16 x,Sint16 y,char *s,Uint16 cursor)
 	static	boolean	status;		// VGA doesn't XOR...
 	char	buf[MaxString];
 	Sint16		temp;
-	Uint16	w,h;
+	int	w,h;
 
 	strcpy(buf,s);
 	buf[cursor] = '\0';
-	USL_MeasureString(buf,&w,&h);
+	USL_MeasureString(buf,w,h);
 
 	px = x + w - 1;
 	py = y;
@@ -475,11 +475,11 @@ static void USL_CustomCursor(Sint16 x,Sint16 y,char *s,Uint16 cursor)
 	static	boolean	status;		// VGA doesn't XOR...
 	char	buf[MaxString];
 	Sint16		temp,temp_font;
-	Uint16	w,h;
+	int	w,h;
 
 	strcpy(buf,s);
 	buf[cursor] = '\0';
-	USL_MeasureString(buf,&w,&h);
+	USL_MeasureString(buf,w,h);
 
 	px = x + w - 1;
 	py = y;
@@ -522,7 +522,7 @@ boolean US_LineInput(Sint16 x,Sint16 y,char *buf,char *def,boolean escok,
 	ScanCode	sc;
 	char		c,
 				s[MaxString],olds[MaxString];
-	Uint16		i,
+	int		i,
 				cursor,
 				w,h,
 				len,temp;
@@ -652,7 +652,7 @@ boolean US_LineInput(Sint16 x,Sint16 y,char *buf,char *def,boolean escok,
 		if (c)
 		{
 			len = static_cast<Uint16>(strlen(s));
-			USL_MeasureString(s,&w,&h);
+			USL_MeasureString(s,w,h);
 
 			if	( isprint(c) &&	(len < MaxString - 1)
 				&&	((!maxchars) || (len < maxchars))

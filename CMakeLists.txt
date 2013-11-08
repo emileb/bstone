@@ -95,19 +95,34 @@ set(hdrs
 	${CMAKE_SOURCE_DIR}/bstone_adlib_sfx_decoder.h
 	${CMAKE_SOURCE_DIR}/bstone_audio_decoder.h
 	${CMAKE_SOURCE_DIR}/bstone_audio_mixer.h
+	${CMAKE_SOURCE_DIR}/bstone_background.h
+	${CMAKE_SOURCE_DIR}/bstone_draw_batch.h
+	${CMAKE_SOURCE_DIR}/bstone_draw_batch_command.h
 	${CMAKE_SOURCE_DIR}/bstone_binary_reader.h
 	${CMAKE_SOURCE_DIR}/bstone_binary_writer.h
 	${CMAKE_SOURCE_DIR}/bstone_c.h
 	${CMAKE_SOURCE_DIR}/bstone_endian.h
 	${CMAKE_SOURCE_DIR}/bstone_file_stream.h
+	${CMAKE_SOURCE_DIR}/bstone_font.h
 	${CMAKE_SOURCE_DIR}/bstone_format_string.h
 	${CMAKE_SOURCE_DIR}/bstone_istream.h
+	${CMAKE_SOURCE_DIR}/bstone_latch.h
+	${CMAKE_SOURCE_DIR}/bstone_latches8.h
 	${CMAKE_SOURCE_DIR}/bstone_memory_binary_reader.h
 	${CMAKE_SOURCE_DIR}/bstone_memory_stream.h
 	${CMAKE_SOURCE_DIR}/bstone_ogl_api.h
+	${CMAKE_SOURCE_DIR}/bstone_ogl_shader_objects.h
+	${CMAKE_SOURCE_DIR}/bstone_ogl_texture.h
+	${CMAKE_SOURCE_DIR}/bstone_ogl_transformations.h
 	${CMAKE_SOURCE_DIR}/bstone_ogl_version.h
 	${CMAKE_SOURCE_DIR}/bstone_opl2.h
 	${CMAKE_SOURCE_DIR}/bstone_pcm_decoder.h
+	${CMAKE_SOURCE_DIR}/bstone_picture.h
+	${CMAKE_SOURCE_DIR}/bstone_resource_list.h
+	${CMAKE_SOURCE_DIR}/bstone_resources.h
+	${CMAKE_SOURCE_DIR}/bstone_rgba.h
+	${CMAKE_SOURCE_DIR}/bstone_sprite.h
+	${CMAKE_SOURCE_DIR}/bstone_wall.h
 	${CMAKE_SOURCE_DIR}/bstone_un_value.h
 	${CMAKE_SOURCE_DIR}/gfxe_bs1.h
 	${CMAKE_SOURCE_DIR}/gfxe_fir.h
@@ -154,6 +169,7 @@ set(srcs
 	${CMAKE_SOURCE_DIR}/3d_play.cpp
 	${CMAKE_SOURCE_DIR}/3d_scale.cpp
 	${CMAKE_SOURCE_DIR}/3d_state.cpp
+	${CMAKE_SOURCE_DIR}/bstone_background.cpp
 	${CMAKE_SOURCE_DIR}/bstone_adlib_decoder.cpp
 	${CMAKE_SOURCE_DIR}/bstone_adlib_music_decoder.cpp
 	${CMAKE_SOURCE_DIR}/bstone_adlib_sfx_decoder.cpp
@@ -162,15 +178,28 @@ set(srcs
 	${CMAKE_SOURCE_DIR}/bstone_binary_reader.cpp
 	${CMAKE_SOURCE_DIR}/bstone_binary_writer.cpp
 	${CMAKE_SOURCE_DIR}/bstone_c.cpp
+	${CMAKE_SOURCE_DIR}/bstone_draw_batch.cpp
+	${CMAKE_SOURCE_DIR}/bstone_draw_batch_command.cpp
 	${CMAKE_SOURCE_DIR}/bstone_file_stream.cpp
+	${CMAKE_SOURCE_DIR}/bstone_font.cpp
 	${CMAKE_SOURCE_DIR}/bstone_format_string.cpp
 	${CMAKE_SOURCE_DIR}/bstone_istream.cpp
+	${CMAKE_SOURCE_DIR}/bstone_latch.cpp
+	${CMAKE_SOURCE_DIR}/bstone_latches8.cpp
 	${CMAKE_SOURCE_DIR}/bstone_memory_binary_reader.cpp
 	${CMAKE_SOURCE_DIR}/bstone_memory_stream.cpp
 	${CMAKE_SOURCE_DIR}/bstone_ogl_api.cpp
+	${CMAKE_SOURCE_DIR}/bstone_ogl_shader_objects.cpp
 	${CMAKE_SOURCE_DIR}/bstone_ogl_version.cpp
+	${CMAKE_SOURCE_DIR}/bstone_ogl_texture.cpp
+	${CMAKE_SOURCE_DIR}/bstone_ogl_transformations.cpp
 	${CMAKE_SOURCE_DIR}/bstone_opl2.cpp
 	${CMAKE_SOURCE_DIR}/bstone_pcm_decoder.cpp
+	${CMAKE_SOURCE_DIR}/bstone_picture.cpp
+	${CMAKE_SOURCE_DIR}/bstone_resource_list.cpp
+	${CMAKE_SOURCE_DIR}/bstone_resources.cpp
+	${CMAKE_SOURCE_DIR}/bstone_sprite.cpp
+	${CMAKE_SOURCE_DIR}/bstone_wall.cpp
 	${CMAKE_SOURCE_DIR}/colormap.cpp
 	${CMAKE_SOURCE_DIR}/d3.cpp
 	${CMAKE_SOURCE_DIR}/d3_d2.cpp

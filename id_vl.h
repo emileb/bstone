@@ -7,6 +7,9 @@
 
 #include "SDL.h"
 
+#include "bstone_resources.h"
+#include "bstone_draw_batch.h"
+
 
 // wolf compatability
 
@@ -197,7 +200,12 @@ void VL_DrawPropString (char *str, Uint16 tile8ptr, Sint16 printx, Sint16 printy
 void VL_SizePropString (char *str, Sint16 *width, Sint16 *height, char* font);
 
 // BBi
+extern bstone::Resources g_resources;
+extern bstone::DrawBatch g_draw_batch;
+extern bstone::Rgba8U* g_palette;
+
 void VL_RefreshScreen();
+// BBi
 
 
 #endif // ID_VL_H

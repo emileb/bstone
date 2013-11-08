@@ -40,6 +40,10 @@ void (APIENTRY* glBindTexture_)(
     GLenum target,
     GLuint texture) = NULL;
 
+void (APIENTRY* glBlendFunc_)(
+    GLenum sfactor,
+    GLenum dfactor) = NULL;
+
 void (APIENTRY* glClear_)(
     GLbitfield mask) = NULL;
 
@@ -53,6 +57,9 @@ void (APIENTRY* glDeleteTextures_)(
     GLsizei n,
     const GLuint* textures) = NULL;
 
+void (APIENTRY* glDepthMask_)(
+    GLboolean mask) = NULL;
+
 void (APIENTRY* glDisable_)(
     GLenum cap) = NULL;
 
@@ -60,6 +67,12 @@ void (APIENTRY* glDrawArrays_)(
     GLenum mode,
     GLint first,
     GLsizei count) = NULL;
+
+void (APIENTRY* glDrawElements_)(
+    GLenum mode,
+    GLsizei count,
+    GLenum type,
+    const GLvoid* indices) = NULL;
 
 void (APIENTRY* glEnable_)(
     GLenum cap) = NULL;
@@ -140,6 +153,13 @@ void APIENTRY glBindTexture(
     glBindTexture_(target, texture);
 }
 
+void APIENTRY glBlendFunc(
+    GLenum sfactor,
+    GLenum dfactor)
+{
+    glBlendFunc_(sfactor, dfactor);
+}
+
 void APIENTRY glClear(
     GLbitfield mask)
 {
@@ -162,6 +182,12 @@ void APIENTRY glDeleteTextures(
     glDeleteTextures_(n, textures);
 }
 
+void APIENTRY glDepthMask(
+    GLboolean mask)
+{
+    glDepthMask_(mask);
+}
+
 void APIENTRY glDisable(
     GLenum cap)
 {
@@ -174,6 +200,15 @@ void APIENTRY glDrawArrays(
     GLsizei count)
 {
     glDrawArrays_(mode, first, count);
+}
+
+void APIENTRY glDrawElements(
+    GLenum mode,
+    GLsizei count,
+    GLenum type,
+    const GLvoid* indices)
+{
+    glDrawElements_(mode, count, type, indices);
 }
 
 void APIENTRY glEnable(
@@ -292,6 +327,7 @@ PFNGLACTIVETEXTUREPROC glActiveTexture_ = NULL;
 PFNGLATTACHSHADERPROC glAttachShader_ = NULL;
 PFNGLBINDBUFFERPROC glBindBuffer_ = NULL;
 PFNGLBUFFERDATAPROC glBufferData_ = NULL;
+PFNGLBUFFERSUBDATAPROC glBufferSubData_ = NULL;
 PFNGLCOMPILESHADERPROC glCompileShader_ = NULL;
 PFNGLCREATEPROGRAMPROC glCreateProgram_ = NULL;
 PFNGLCREATESHADERPROC glCreateShader_ = NULL;
@@ -313,6 +349,7 @@ PFNGLISSHADERPROC glIsShader_ = NULL;
 PFNGLLINKPROGRAMPROC glLinkProgram_ = NULL;
 PFNGLSHADERSOURCEPROC glShaderSource_ = NULL;
 PFNGLUNIFORM1IPROC glUniform1i_ = NULL;
+PFNGLUNIFORM4FVPROC glUniform4fv_ = NULL;
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv_ = NULL;
 PFNGLUSEPROGRAMPROC glUseProgram_ = NULL;
 PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer_ = NULL;
@@ -348,6 +385,15 @@ GLAPI void APIENTRY glBufferData(
     GLenum usage)
 {
     glBufferData_(target, size, data, usage);
+}
+
+GLAPI void APIENTRY glBufferSubData(
+    GLenum target,
+    GLintptr offset,
+    GLsizeiptr size,
+    const GLvoid* data)
+{
+    glBufferSubData_(target, offset, size, data);
 }
 
 GLAPI void APIENTRY glCompileShader(
@@ -494,6 +540,14 @@ GLAPI void APIENTRY glUniform1i(
     glUniform1i_(location, v0);
 }
 
+GLAPI void APIENTRY glUniform4fv(
+    GLint location,
+    GLsizei count,
+    const GLfloat* value)
+{
+    glUniform4fv_(location, count, value);
+}
+
 GLAPI void APIENTRY glUniformMatrix4fv(
     GLint location,
     GLsizei count,
@@ -606,6 +660,9 @@ bool OglApi::initialize()
         "glBindTexture", glBindTexture_, missing_symbols);
 
     ogl_api_get_base_symbol(
+        "glBlendFunc", glBlendFunc_, missing_symbols);
+
+    ogl_api_get_base_symbol(
         "glClear", glClear_, missing_symbols);
 
     ogl_api_get_base_symbol(
@@ -615,10 +672,16 @@ bool OglApi::initialize()
         "glDeleteTextures", glDeleteTextures_, missing_symbols);
 
     ogl_api_get_base_symbol(
+        "glDepthMask", glDepthMask_, missing_symbols);
+
+    ogl_api_get_base_symbol(
         "glDisable", glDisable_, missing_symbols);
 
     ogl_api_get_base_symbol(
         "glDrawArrays", glDrawArrays_, missing_symbols);
+
+    ogl_api_get_base_symbol(
+        "glDrawElements", glDrawElements_, missing_symbols);
 
     ogl_api_get_base_symbol(
         "glEnable", glEnable_, missing_symbols);
@@ -671,6 +734,9 @@ bool OglApi::initialize()
 
     ogl_api_get_base_symbol(
         "glBufferData", glBufferData_, missing_symbols);
+
+    ogl_api_get_base_symbol(
+        "glBufferSubData", glBufferSubData_, missing_symbols);
 
     ogl_api_get_base_symbol(
         "glCompileShader", glCompileShader_, missing_symbols);
@@ -734,6 +800,9 @@ bool OglApi::initialize()
 
     ogl_api_get_base_symbol(
         "glUniform1i", glUniform1i_, missing_symbols);
+
+    ogl_api_get_base_symbol(
+        "glUniform4fv", glUniform4fv_, missing_symbols);
 
     ogl_api_get_base_symbol(
         "glUniformMatrix4fv", glUniformMatrix4fv_, missing_symbols);
@@ -835,11 +904,14 @@ void OglApi::uninitialize()
 {
 #if !defined(BSTONE_OGL_DIRECT_LINK)
     glBindTexture_ = NULL;
+    glBlendFunc_ = NULL;
     glClear_ = NULL;
     glClearColor_ = NULL;
     glDeleteTextures_ = NULL;
+    glDepthMask_ = NULL;
     glDisable_ = NULL;
     glDrawArrays_ = NULL;
+    glDrawElements_ = NULL;
     glEnable_ = NULL;
     glGenTextures_ = NULL;
     glGetError_ = NULL;
@@ -856,6 +928,7 @@ void OglApi::uninitialize()
     glAttachShader_ = NULL;
     glBindBuffer_ = NULL;
     glBufferData_ = NULL;
+    glBufferSubData_ = NULL;
     glCompileShader_ = NULL;
     glCreateProgram_ = NULL;
     glCreateShader_ = NULL;

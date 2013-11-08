@@ -15,7 +15,7 @@ OglTexture::OglTexture(
     int width,
     int height,
     OglTextureFormat data_format,
-    const Rgba* data) :
+    const Rgba8U* data) :
         texture_(),
         width_(),
         height_()
@@ -32,7 +32,7 @@ bool OglTexture::initialize(
     int width,
     int height,
     OglTextureFormat data_format,
-    const Rgba* data)
+    const Rgba8U* data)
 {
     uninitialize();
 

@@ -23,7 +23,7 @@ public:
         int width,
         int height,
         OglTextureFormat data_format,
-        const Rgba* data);
+        const Rgba8U* data);
 
     ~OglTexture();
 
@@ -31,7 +31,7 @@ public:
         int width,
         int height,
         OglTextureFormat data_format,
-        const Rgba* data);
+        const Rgba8U* data);
 
     void uninitialize();
 

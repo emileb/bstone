@@ -21,6 +21,21 @@ Sprite::Sprite() :
 {
 }
 
+Sprite::Sprite(
+    int id) :
+        x_(),
+        y_(),
+        width_(),
+        height_(),
+        tc_x0_(),
+        tc_y0_(),
+        tc_x1_(),
+        tc_y1_(),
+        texture_()
+{
+    initialize(id);
+}
+
 Sprite::~Sprite()
 {
     uninitialize();
@@ -41,19 +56,19 @@ bool Sprite::initialize(
     int width = last_post - first_post + 1;
 
     std::vector<int> offsets;
-    offsets.resize(64);
+    offsets.resize(width);
 
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < width; ++i)
         offsets[i] = Endian::le(reader.read_u16());
 
-    std::vector<Rgba> buffer;
-    buffer.resize(64 * 64, Rgba(0));
+    std::vector<Rgba8U> buffer;
+    buffer.resize(64 * 64, Rgba8U(0));
 
     int min_y = 64;
     int max_y = 0;
 
     for (int x = first_post; x <= last_post; ++x) {
-        reader.set_position(offsets[x]);
+        reader.set_position(offsets[x - first_post]);
 
         int end_y = Endian::le(reader.read_u16()) / 2;
 
@@ -62,13 +77,11 @@ bool Sprite::initialize(
             int beg_y = Endian::le(reader.read_u16()) / 2;
             pixel_offset += beg_y;
             pixel_offset %= 65536;
-            Uint8 pixel_index = data[pixel_offset];
-            const Uint8* palette = &vgapal[3 * pixel_index];
-            Rgba color(palette[0], palette[1], palette[2]);
+            const Uint8* pixel = &data[pixel_offset];
 
             for (int y = beg_y; y < end_y; ++y) {
                 int offset = ((63 - y) * 64) + x;
-                buffer[offset] = color;
+                buffer[offset] = ::g_palette[*pixel++];
             }
 
             min_y = std::min(min_y, 63 - beg_y);
@@ -119,6 +132,11 @@ void Sprite::uninitialize()
 
     delete texture_;
     texture_ = NULL;
+}
+
+OglTexture* Sprite::get_texture()
+{
+    return texture_;
 }
 
 bool Sprite::is_initialized() const

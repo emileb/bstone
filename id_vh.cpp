@@ -34,9 +34,11 @@ pictabletype	*pictable;
 pictabletype   *picmtable;			
 
 
-Sint16	px,py;
-Uint8	fontcolor,backcolor;
-Sint16	fontnumber;
+int px;
+int py;
+Uint8 fontcolor;
+Uint8 backcolor;
+int fontnumber;
 
 // FIXME
 #if 0
@@ -52,6 +54,8 @@ void	VWL_UpdateScreenBlocks (void);
 
 //==========================================================================
 
+// FIXME
+#if 0
 void VW_DrawPropString (const char* string)
 {
     fontstruct* font;
@@ -89,7 +93,28 @@ void VW_DrawPropString (const char* string)
         }
     }
 }
+#endif // 0
 
+void VW_DrawPropString(
+    const char* string)
+{
+    int width;
+    int height;
+    bstone::Font* font = ::g_resources.get_fonts().add(::fontnumber);
+    font->measure_string(string, width, height);
+
+    bstone::DrawBatchCommand command;
+    command.type = bstone::DBCT_STRING;
+    command.font = ::g_resources.get_fonts().add(::fontnumber);
+    command.color_index = fontcolor;
+    command.x = px;
+    command.y = py;
+    command.text = string;
+
+    ::g_draw_batch.add_command(command);
+
+    px += width;
+}
 
 //==========================================================================
 
@@ -141,6 +166,8 @@ void VL_MungePic (Uint8 *source, unsigned width, unsigned height)
 
 #endif
 
+// FIXME
+#if 0
 void VWL_MeasureString(
     const char* string,
     Uint16* width,
@@ -151,10 +178,32 @@ void VWL_MeasureString(
 	for (*width = 0;*string;string++)
 		*width += font->width[*((const Uint8*)string)];	// proportional width
 }
+#endif // 0
 
+void VWL_MeasureString(
+    const char* string,
+    int& width,
+    int& height,
+    int font_index)
+{
+    bstone::Font* font = ::g_resources.get_fonts().add(font_index);
+    font->measure_string(string, width, height);
+}
+
+// FIXME
+#if 0
 void	VW_MeasurePropString (const char* string, Uint16* width, Uint16* height)
 {
 	VWL_MeasureString(string,width,height,(fontstruct *)grsegs[STARTFONT+fontnumber]);
+}
+#endif // 0
+
+void VW_MeasurePropString(
+    const char* string,
+    int& width,
+    int& height)
+{
+    ::VWL_MeasureString(string, width, height, fontnumber);
 }
 
 #if 0
@@ -234,10 +283,27 @@ Sint16 VW_MarkUpdateBlock (Sint16 x1, Sint16 y1, Sint16 x2, Sint16 y2)
 	return 1;
 }
 
+// FIXME
+#if 0
 void VWB_DrawTile8 (Sint16 x, Sint16 y, Sint16 tile)
 {
 	if (VW_MarkUpdateBlock (x,y,x+7,y+7))
 		LatchDrawChar(x,y,tile);
+}
+#endif // 0
+
+void VWB_DrawTile8(
+    Sint16 x,
+    Sint16 y,
+    Sint16 tile)
+{
+    bstone::DrawBatchCommand command;
+    command.type = bstone::DBCT_LATCH8;
+    command.latch8_index = tile;
+    command.latches8 = &::g_resources.get_latches8();
+    command.x = x;
+    command.y = y;
+    ::g_draw_batch.add_command(command);
 }
 
 #if 0
@@ -249,7 +315,8 @@ void VWB_DrawTile8M (int x, int y, int tile)
 }
 #endif
 
-
+// FIXME
+#if 0
 void VWB_DrawPic(int x, int y, int chunknum)
 {
 	Sint16	picnum = static_cast<Sint16>(chunknum - STARTPICS);
@@ -262,6 +329,24 @@ void VWB_DrawPic(int x, int y, int chunknum)
 
 	if (VW_MarkUpdateBlock (static_cast<Sint16>(x),static_cast<Sint16>(y),static_cast<Sint16>(x+width-1),static_cast<Sint16>(y+height-1)))
 		VL_MemToScreen (static_cast<const Uint8*>(grsegs[chunknum]),width,height,x,y);
+}
+#endif // 0
+
+void VWB_DrawPic(
+    int x,
+    int y,
+    int chunknum)
+{
+    x &= ~7;
+
+    bstone::Picture* picture = ::g_resources.get_pictures().add(chunknum);
+
+    bstone::DrawBatchCommand command;
+    command.type = bstone::DBCT_PICTURE;
+    command.picture = picture;
+    command.x = x;
+    command.y = y;
+    ::g_draw_batch.add_command(command);
 }
 
 
@@ -348,7 +433,8 @@ void VW_UpdateScreen (void)
 =====================
 */
 
-
+// FIXME
+#if 0
 void LatchDrawPic (Uint16 x, Uint16 y, Uint16 picnum)
 {
 	Uint16 wide, height, source;
@@ -360,6 +446,20 @@ void LatchDrawPic (Uint16 x, Uint16 y, Uint16 picnum)
 
 	if (VW_MarkUpdateBlock (x,y,x+wide-1,y+height-1))
 		VL_LatchToScreen (source,wide/4,height,x,y);
+}
+#endif // 0
+
+void LatchDrawPic(
+    Uint16 x,
+    Uint16 y,
+    Uint16 picnum)
+{
+    bstone::DrawBatchCommand command;
+    command.type = bstone::DBCT_LATCH;
+    command.latch = ::g_resources.get_latches().add(picnum);
+    command.x = x;
+    command.y = y;
+    ::g_draw_batch.add_command(command);
 }
 
 
@@ -376,6 +476,8 @@ void LatchDrawPic (Uint16 x, Uint16 y, Uint16 picnum)
 //unsigned LatchMemFree = 0xffff;		
 Uint16	destoff;
 
+// FIXME
+#if 0
 void LoadLatchMem (void)
 {
 	Sint16	i,width,height;
@@ -434,7 +536,36 @@ void LoadLatchMem (void)
 
 	EGAMAPMASK(15);
 }
+#endif // 0
 
+// FIXME
+#if 1
+void LoadLatchMem()
+{
+    Sint16 i;
+    Sint16 width;
+    Sint16 height;
+    Uint8* src;
+
+    //
+    // tile 8s
+    //
+    ::CA_CacheGrChunk(STARTTILE8);
+    ::g_resources.get_latches8().initialize(STARTTILE8);
+    ::UNCACHEGRCHUNK(STARTTILE8);
+
+    //
+    // pics
+    //
+    for (i = LATCHPICS_LUMP_START; i <= LATCHPICS_LUMP_END; ++i) {
+        ::CA_CacheGrChunk(i);
+        width = ::pictable[i - STARTPICS].width;
+        height = ::pictable[i - STARTPICS].height;
+        ::g_resources.get_latches().add(i);
+        ::UNCACHEGRCHUNK(i);
+    }
+}
+#endif // 0
 
 //==========================================================================
 

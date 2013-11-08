@@ -20,7 +20,12 @@ void VL_WaitVBL (Uint32 vbls)
 
 void VH_UpdateScreen()
 {
+// FIXME
+#if 0
     ogl_update_screen();
+#endif // 0
+
+    ::VL_RefreshScreen();
 }
 
 void VL_ScreenToScreen(

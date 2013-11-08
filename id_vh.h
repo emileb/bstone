@@ -58,8 +58,9 @@ extern	pictabletype	*picmtable;
 extern	spritetabletype *spritetable;
 
 extern	Uint8	fontcolor;
-extern	Sint16	fontnumber;
-extern	Sint16	px,py;
+extern int fontnumber;
+extern int px;
+extern int py;
 extern	boolean allcaps;
 
 
@@ -120,7 +121,7 @@ void VH_SetDefaultColors (void);
 #define VW_FadeOut()	VL_FadeOut(0,255,0,0,0,30);
 #define VW_ScreenToScreen	VL_ScreenToScreen
 #define VW_SetDefaultColors	VH_SetDefaultColors
-void VW_MeasurePropString(const char* string, Uint16* width, Uint16* height);
+void VW_MeasurePropString(const char* string, int& width, int& height);
 #define EGAMAPMASK(x)	VGAMAPMASK(x)
 #define EGAWRITEMODE(x)	VGAWRITEMODE(x)
 
