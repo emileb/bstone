@@ -43,6 +43,10 @@ public:
     void remove_group(
         int id);
 
+    // Removes groups from specified till end.
+    void remove_groups_from(
+        int id);
+
     void clear_group(
         int id);
 

@@ -399,6 +399,23 @@ void DrawBatch::remove_group(
     }
 }
 
+void DrawBatch::remove_groups_from(
+    int id)
+{
+    GroupsIt it = std::find_if(
+        groups_.begin(), groups_.end(), IfEqPredicate<Group>(id));
+
+    groups_.erase(it, groups_.end());
+
+    if (groups_.empty()) {
+        current_group_ = NULL;
+        current_commands_ = NULL;
+    } else {
+        current_group_ = &groups_.back();
+        current_commands_ = &current_group_->commands;
+    }
+}
+
 void DrawBatch::clear_group(
     int id)
 {

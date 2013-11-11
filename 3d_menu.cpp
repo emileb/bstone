@@ -492,8 +492,7 @@ void HelpPresenter(
 
     VW_FadeOut();
 
-    ::g_draw_batch.clear();
-    ::g_draw_batch.add_group();
+    int main_group = ::g_draw_batch.add_group();
 
     // Change view size to MAX! (scaler clips shapes on smaller views)
     //
@@ -549,7 +548,7 @@ void HelpPresenter(
 
     ::IN_ClearKeysDown();
 
-    ::g_draw_batch.clear();
+    ::g_draw_batch.remove_groups_from(main_group);
 }
 
 //--------------------------------------------------------------------------
@@ -692,6 +691,9 @@ void US_ControlPanel(Uint8 scancode)
 #endif
 
  // RETURN/START GAME EXECUTION
+
+    // BBi
+    ::g_draw_batch.clear();
 }
 
 //--------------------------------------------------------------------------
@@ -1022,6 +1024,9 @@ void CP_ViewScores(Sint16)
 //--------------------------------------------------------------------------
 // CP_NewGame() - START A NEW GAME
 //--------------------------------------------------------------------------
+
+// FIXME
+#if 0
 void CP_NewGame(Sint16)
 {
 	Sint16 which,episode;
@@ -1119,6 +1124,109 @@ secondpart:
  //
  MainMenu[MM_READ_THIS].active=AT_ENABLED;
 
+}
+#endif // 0
+
+void CP_NewGame(
+    Sint16)
+{
+    Sint16 which = 0;
+    Sint16 episode = 0;
+
+    ::DrawMenuTitle("Difficulty Level");
+    ::DrawInstructions(IT_STANDARD);
+
+
+// FIXME
+#if 0
+firstpart:
+
+    ::DrawNewEpisode();
+
+    do {
+        which = ::HandleMenu(&NewEitems, &NewEmenu[0], DrawEpisodePic);
+
+        switch (which) {
+        case -1:
+            ::MenuFadeOut();
+            return;
+
+        default:
+            if (!::EpisodeSelect[which]) {
+                ::SD_PlaySound(NOWAYSND);
+                ::CacheMessage(READTHIS_TEXT);
+                ::IN_ClearKeysDown();
+                ::IN_Ack();
+                ::VL_Bar(35, 69, 250, 62, TERM_BACK_COLOR);
+                ::DrawNewEpisode();
+                which = 0;
+            } else {
+                episode = which;
+                which = 1;
+            }
+            break;
+        }
+
+    } while (!which);
+
+    ::ShootSnd();
+#else
+    episode = 0;
+#endif
+
+#if 0
+    //
+    // ALREADY IN A GAME?
+    //
+    if (ingame) {
+        if (!::Confirm(CURGAME)) {
+            ::MenuFadeOut();
+            return;
+        }
+    }
+#endif
+
+secondpart:
+
+    ::MenuFadeOut();
+
+    if (ingame) {
+        ::g_draw_batch.clear_current_group();
+        ::CA_CacheScreen(BACKGROUND_SCREENPIC);
+    }
+
+    ::DrawNewGame();
+
+    which = ::HandleMenu(&NewItems, &NewMenu[0], DrawNewGameDiff);
+
+    if (which < 0) {
+        ::MenuFadeOut();
+#if 0
+        goto firstpart;
+#else
+        ::g_draw_batch.clear_current_group();
+        return;
+#endif
+    }
+
+    ::ShootSnd();
+    ::MenuFadeOut();
+    ::ControlPanelFree();
+
+    if (::Breifing(BT_INTRO, episode)) {
+        ::g_draw_batch.clear_current_group();
+        ::CA_CacheScreen(BACKGROUND_SCREENPIC);
+        ::ControlPanelAlloc();
+        goto secondpart;
+    }
+
+    StartGame = 1;
+    ::NewGame(which, episode);
+
+    //
+    // CHANGE "READ THIS!" TO NORMAL COLOR
+    //
+    MainMenu[MM_READ_THIS].active = AT_ENABLED;
 }
 
 //---------------------------------------------------------------------------
