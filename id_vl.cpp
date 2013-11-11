@@ -457,6 +457,8 @@ void VL_SetSplitScreen (int linenum)
 =================
 */
 
+// FIXME
+#if 0
 void VL_FillPalette(int red, int green, int blue)
 {
     int i;
@@ -468,6 +470,12 @@ void VL_FillPalette(int red, int green, int blue)
     }
 
     VL_SetPalette(0, 255, vga_palette);
+}
+#endif // 0
+
+void VL_FillPalette(int red, int green, int blue)
+{
+    ::g_draw_batch.set_fade_color(red, green, blue);
 }
 
 //===========================================================================
@@ -591,6 +599,8 @@ void VL_GetPalette(
 =================
 */
 
+// FIXME
+#if 0
 void VL_FadeOut (
     int start,
     int end,
@@ -638,6 +648,26 @@ void VL_FadeOut (
 
     screenfaded = true;
 }
+#endif // 0
+
+void VL_FadeOut (
+    int start,
+    int end,
+    int red,
+    int green,
+    int blue,
+    int steps)
+{
+    float r_steps_f = 1.0F / steps;
+    ::g_draw_batch.set_fade_color(red, green, blue);
+
+    for (int i = 0; i <= steps; ++i) {
+        ::g_draw_batch.set_fade(i * r_steps_f);
+        ::VL_RefreshScreen();
+    }
+
+    screenfaded = true;
+}
 
 
 /*
@@ -648,6 +678,8 @@ void VL_FadeOut (
 =================
 */
 
+// FIXME
+#if 0
 void VL_FadeIn(
     int start,
     int end,
@@ -680,6 +712,23 @@ void VL_FadeIn(
     // final color
     //
     VL_SetPalette(0, 256, palette);
+
+    screenfaded = false;
+}
+#endif // 0
+
+void VL_FadeIn(
+    int start,
+    int end,
+    const Uint8* palette,
+    int steps)
+{
+    float r_steps_f = 1.0F / steps;
+
+    for (int i = 0; i <= steps; ++i) {
+        ::g_draw_batch.set_fade((steps - i) * r_steps_f);
+        ::VL_RefreshScreen();
+    }
 
     screenfaded = false;
 }

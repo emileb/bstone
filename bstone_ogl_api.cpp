@@ -349,6 +349,7 @@ PFNGLISSHADERPROC glIsShader_ = NULL;
 PFNGLLINKPROGRAMPROC glLinkProgram_ = NULL;
 PFNGLSHADERSOURCEPROC glShaderSource_ = NULL;
 PFNGLUNIFORM1IPROC glUniform1i_ = NULL;
+PFNGLUNIFORM1FPROC glUniform1f_ = NULL;
 PFNGLUNIFORM4FVPROC glUniform4fv_ = NULL;
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv_ = NULL;
 PFNGLUSEPROGRAMPROC glUseProgram_ = NULL;
@@ -538,6 +539,13 @@ GLAPI void APIENTRY glUniform1i(
     GLint v0)
 {
     glUniform1i_(location, v0);
+}
+
+GLAPI void APIENTRY glUniform1f(
+    GLint location,
+    GLfloat v0)
+{
+    glUniform1f_(location, v0);
 }
 
 GLAPI void APIENTRY glUniform4fv(
@@ -802,6 +810,9 @@ bool OglApi::initialize()
         "glUniform1i", glUniform1i_, missing_symbols);
 
     ogl_api_get_base_symbol(
+        "glUniform1f", glUniform1f_, missing_symbols);
+
+    ogl_api_get_base_symbol(
         "glUniform4fv", glUniform4fv_, missing_symbols);
 
     ogl_api_get_base_symbol(
@@ -949,6 +960,7 @@ void OglApi::uninitialize()
     glLinkProgram_ = NULL;
     glShaderSource_ = NULL;
     glUniform1i_ = NULL;
+    glUniform1f_ = NULL;
     glUniformMatrix4fv_ = NULL;
     glUseProgram_ = NULL;
     glVertexAttribPointer_ = NULL;

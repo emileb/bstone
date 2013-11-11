@@ -47,12 +47,16 @@ const GLchar* batch_fs_text =
 
     "uniform sampler2D diffuse_tu;\n"
     "uniform vec4 solid_color_vec4;\n"
+    "uniform float fade;\n"
+    "uniform vec4 fade_color_vec4;\n"
 
     "varying vec2 tc;\n"
 
     "void main()\n"
     "{\n"
-        "gl_FragColor = solid_color_vec4 * texture2D(diffuse_tu, tc);\n"
+        "vec4 color = solid_color_vec4 * texture2D(diffuse_tu, tc);"
+        "gl_FragColor = mix(color, fade_color_vec4, fade);\n"
+        "gl_FragColor.a = color.a;\n"
     "}\n"
 ;
 
@@ -80,6 +84,7 @@ const GLchar* batch_vs_text =
 ;
 
 const Rgba32F SOLID_WHITE(1.0F);
+const Rgba32F SOLID_BLACK(0.0F, 0.0F, 0.0F, 1.0F);
 
 
 } // namespace
@@ -191,7 +196,9 @@ DrawBatch::DrawBatch() :
     a_tc0_vec2_(-1),
     u_proj_mat4_(-1),
     u_diffuse_tu_(-1),
-    u_solid_color_vec4_(-1)
+    u_solid_color_vec4_(-1),
+    u_fade_(-1),
+    u_fade_color_vec4_(-1)
 {
 }
 
@@ -589,10 +596,37 @@ void DrawBatch::draw()
     if (a_tc0_vec2_ >= 0)
         ::glDisableVertexAttribArray(a_tc0_vec2_);
 
-    ::glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_NONE);
     ::glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
+}
 
-    ::glUseProgram(GL_NONE);
+void DrawBatch::set_fade(
+    float value)
+{
+    ::glUseProgram(program_);
+    ::glUniform1f(u_fade_, value);
+}
+
+void DrawBatch::set_fade_color(
+    int r,
+    int g,
+    int b)
+{
+    Rgba32F color(r / 255.0F, g / 255.0F, b / 255.0F);
+
+    ::glUseProgram(program_);
+    ::glUniform4fv(u_fade_color_vec4_, 1, &color[0]);
+}
+
+void DrawBatch::set_fade(
+    float value,
+    int r,
+    int g,
+    int b)
+{
+    Rgba32F color(r / 255.0F, g / 255.0F, b / 255.0F);
+    ::glUseProgram(program_);
+    ::glUniform1f(u_fade_, value);
+    ::glUniform4fv(u_fade_color_vec4_, 1, &color[0]);
 }
 
 bool DrawBatch::is_command_exists(
@@ -728,6 +762,13 @@ void DrawBatch::setup_shader_objects()
     u_solid_color_vec4_ =
         ::glGetUniformLocation(program_, "solid_color_vec4");
     ::glUniform4fv(u_solid_color_vec4_, 1, &SOLID_WHITE[0]);
+
+    u_fade_ = ::glGetUniformLocation(program_, "fade");
+    ::glUniform1f(u_fade_, 0.0F);
+
+    u_fade_color_vec4_ =
+        ::glGetUniformLocation(program_, "fade_color_vec4");
+    ::glUniform4fv(u_fade_color_vec4_, 1, &SOLID_BLACK[0]);
 
     ::glUseProgram(GL_NONE);
 }

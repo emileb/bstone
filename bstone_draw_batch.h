@@ -75,6 +75,20 @@ public:
 
     void draw();
 
+    void set_fade(
+        float value);
+
+    void set_fade_color(
+        int r,
+        int g,
+        int b);
+
+    void set_fade(
+        float value,
+        int r,
+        int g,
+        int b);
+
     bool is_command_exists(
         int id) const;
 
@@ -168,6 +182,8 @@ private:
     GLint u_proj_mat4_;
     GLint u_diffuse_tu_;
     GLint u_solid_color_vec4_;
+    GLint u_fade_;
+    GLint u_fade_color_vec4_;
 
     DrawBatch(
         const DrawBatch& that);
