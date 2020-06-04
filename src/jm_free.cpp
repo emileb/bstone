@@ -878,6 +878,17 @@ void find_contents()
 		}
 	}
 
+#ifdef __MOBILE__
+	const auto& android_aog_dir = bstone::file_system::append_path_separator(
+		bstone::file_system::get_working_dir() + "/aog");
+
+	add_search_path("aog", android_aog_dir, search_paths);
+
+	const auto& android_ps_dir = bstone::file_system::append_path_separator(
+    		bstone::file_system::get_working_dir() + "/ps");
+
+	add_search_path("ps", android_ps_dir, search_paths);
+#endif
 
 	// Find contents.
 	//

@@ -557,6 +557,10 @@ void PollMouseMove()
 	controly += static_cast<int>(delta_y);
 }
 
+#ifdef __MOBILE__
+void pollAndroidControls(int tics,int *controlx, int *controly,int *controlstrafe);
+#endif
+
 /*
 ===================
 =
@@ -639,6 +643,10 @@ void PollControls()
 	{
 		PollMouseMove();
 	}
+
+#ifdef __MOBILE__
+	pollAndroidControls(tics,&controlx, &controly, &strafe_value);
+#endif
 
 	//
 	// bound movement to a maximum

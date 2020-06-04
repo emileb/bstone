@@ -1294,6 +1294,13 @@ char IN_WaitForASCII()
 //
 ///////////////////////////////////////////////////////////////////////////
 
+
+#ifdef __MOBILE__
+bool g_mobileWaitForAnyKey = false;
+bool mobile_CheckAck();
+void mobile_StartAck();
+#endif
+
 using BtnState = std::bitset<8>;
 BtnState btnstate;
 
@@ -1304,6 +1311,10 @@ void IN_StartAck()
 	//
 	// get initial state of everything
 	//
+#ifdef __MOBILE__
+	mobile_StartAck();
+#endif
+
 	IN_ClearKeysDown();
 	btnstate.reset();
 
@@ -1331,6 +1342,13 @@ bool IN_CheckAck()
 	//
 	// see if something has been pressed
 	//
+#ifdef __MOBILE__
+	if( mobile_CheckAck() )
+	{
+		return true;
+	}
+#endif
+
 	if (LastScan != ScanCode::sc_none)
 	{
 		return true;
@@ -1363,11 +1381,19 @@ bool IN_CheckAck()
 
 void IN_Ack()
 {
+#ifdef __MOBILE__
+	g_mobileWaitForAnyKey = true;
+#endif
+
 	IN_StartAck();
 
 	while (!IN_CheckAck())
 	{
 	}
+
+#ifdef __MOBILE__
+	g_mobileWaitForAnyKey = false;
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1498,18 +1524,29 @@ void in_set_default_bindings()
 	in_bindings[e_bi_grab_mouse][0] = ScanCode::sc_u;
 }
 
+#ifdef __MOBILE__
+bool mobile_is_binding_pressed(  BindingId binding_id );
+void mobile_in_reset_binding_state(  BindingId binding_id );
+#endif
+
 bool in_is_binding_pressed(
 	BindingId binding_id)
 {
 	const Binding& binding = in_bindings[binding_id];
 
 	return (binding[0] != ScanCode::sc_none && Keyboard[binding[0]]) ||
-		(binding[1] != ScanCode::sc_none && Keyboard[binding[1]]);
+		(binding[1] != ScanCode::sc_none && Keyboard[binding[1]])
+#ifdef __MOBILE__
+		|| (mobile_is_binding_pressed( binding_id ));
+#endif
 }
 
 void in_reset_binding_state(
 	BindingId binding_id)
 {
+#ifdef __MOBILE__
+	mobile_in_reset_binding_state( binding_id );
+#endif
 	const auto& binding = in_bindings[binding_id];
 
 	if (binding[0] != ScanCode::sc_none)

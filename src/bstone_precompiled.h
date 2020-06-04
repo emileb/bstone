@@ -31,6 +31,9 @@ Free Software Foundation, Inc.,
 #define BSTONE_PRECOMPILED_INCLUDED
 
 
+#ifdef BSTONE_USE_PCH
+
+
 #include <cassert>
 #include <cctype>
 #include <cmath>
@@ -74,8 +77,6 @@ Free Software Foundation, Inc.,
 #include "bstone_endian.h"
 #include "bstone_exception.h"
 #include "bstone_logger.h"
-#include "bstone_math.h"
-#include "bstone_mt_task_mgr.h"
 #include "bstone_sha1.h"
 #include "bstone_stream.h"
 #include "bstone_string_helper.h"
@@ -91,5 +92,12 @@ Free Software Foundation, Inc.,
 
 #include "bstone_rgb8.h"
 
+
+#endif // BSTONE_USE_PCH
+
+#ifndef LOGI
+#include <android/log.h>
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO,"JNI", __VA_ARGS__))
+#endif
 
 #endif // BSTONE_PRECOMPILED_INCLUDED

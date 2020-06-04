@@ -158,7 +158,9 @@ std::int16_t COAL_FONT()
 
 bool is_full_menu_active = false;
 
-
+#ifdef __MOBILE__
+bool 	g_mobileMenusAreFaded = true;
+#endif
 //
 // VARIABLES
 //
@@ -1876,6 +1878,10 @@ void US_ControlPanel(
 		// "EXIT OPTIONS" OR "NEW GAME" EXITS
 		//
 	} while (!StartGame);
+
+#ifdef __MOBILE__
+	g_mobileMenusAreFaded = true;
+#endif
 
 	//
 	// DEALLOCATE EVERYTHING
@@ -4110,6 +4116,10 @@ void ReadAnyControl(
 	}
 }
 
+#ifdef __MOBILE__
+bool g_mobileInConfirm = false;
+#endif
+
 ////////////////////////////////////////////////////////////////////
 //
 // DRAW DIALOG AND CONFIRM YES OR NO TO QUESTION
@@ -4120,6 +4130,9 @@ std::int16_t Confirm(
 {
 	std::int16_t xit = 0, x, y, tick = 0, whichsnd[2] = {ESCPRESSEDSND, SHOOTSND};
 
+#ifdef __MOBILE__
+ 	g_mobileInConfirm = true;
+#endif
 
 	Message(string);
 
@@ -4178,6 +4191,10 @@ std::int16_t Confirm(
 	sd_play_player_sound(whichsnd[xit], bstone::ActorChannel::unpausable);
 
 	FREEFONT(STARTFONT + fontnumber);
+
+#ifdef __MOBILE__
+	g_mobileInConfirm = false;
+#endif
 
 	return xit;
 }
@@ -6417,6 +6434,10 @@ void filler_color_routine(
 
 void MenuFadeOut()
 {
+#ifdef __MOBILE__
+	g_mobileMenusAreFaded = true;
+#endif
+
 	const auto& assets_info = AssetsInfo{};
 
 	if (assets_info.is_aog())
@@ -6431,6 +6452,9 @@ void MenuFadeOut()
 
 void MenuFadeIn()
 {
+#ifdef __MOBILE__
+    g_mobileMenusAreFaded = false;
+#endif
 	VL_FadeIn(0, 255, vgapal, 10);
 }
 

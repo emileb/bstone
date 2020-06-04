@@ -139,6 +139,11 @@ DefaultLogger::~DefaultLogger()
 	uninitialize();
 }
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO,"BS", __VA_ARGS__))
+#endif
+
 void DefaultLogger::write(
 	const LoggerMessageKind message_kind,
 	const std::string& message)
@@ -171,6 +176,10 @@ void DefaultLogger::write(
 	message_ += message;
 
 	std::cout << message_ << std::endl;
+
+#ifdef __ANDROID__
+    LOGI("%s",message_.c_str());
+#endif
 
 	if (is_file_stream_initialized_)
 	{

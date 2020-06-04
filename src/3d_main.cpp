@@ -9962,9 +9962,15 @@ void DrawCreditsPage()
 }
 
 
+#ifdef __MOBILE__
+int main_mobile(
+    int argc,
+    char* argv[])
+#else
 int main(
 	int argc,
 	char* argv[])
+#endif
 {
 #ifdef __vita__
 	scePowerSetArmClockFrequency(444);
@@ -10048,6 +10054,9 @@ int main(
 		return 1;
 	}
 
+#ifdef __MOBILE__
+	exit(0); // force the process to die so it re-loads properly next time
+#endif
 	return 0;
 }
 
@@ -10694,6 +10703,11 @@ void sys_default_sleep_for()
 
 const std::string& get_profile_dir()
 {
+#ifdef __MOBILE__
+    static std::string path = "./";
+    return path;
+#endif
+
 	static std::string profile_dir;
 	static auto is_initialized = false;
 
@@ -10726,9 +10740,13 @@ const std::string& get_profile_dir()
 
 const std::string& get_default_data_dir()
 {
+
 	static std::string result;
 	static auto is_initialized = false;
-
+#ifdef __MOBILE__
+    result = "./";
+    return result;
+#endif
 	if (!is_initialized)
 	{
 		is_initialized = true;

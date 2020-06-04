@@ -508,7 +508,9 @@ void Ren3dGl::present()
 {
 	blit_framebuffers();
 
+#ifndef __MOBILE__
 	Ren3dGlError::ensure();
+#endif
 
 	Ren3dGlUtils::swap_window(sdl_window_.get());
 

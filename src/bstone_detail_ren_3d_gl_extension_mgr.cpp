@@ -2862,7 +2862,13 @@ void Ren3dGlExtensionMgrImpl::parse_version(
 
 		gl_version.release_ = parse_version_number(release_version_str_view);
 	}
-
+	
+		// Make sure GLES3 devices work..
+#ifdef __MOBILE__
+		gl_version.is_es_ = true;
+		gl_version.major_ = 2;
+		gl_version.minor_ = 0;
+#endif
 
 	// Vendor information.
 	//

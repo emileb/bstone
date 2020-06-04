@@ -3569,10 +3569,17 @@ bool ov_noImage = false;
 const int TOV_X = 16;
 const int TOV_Y = 132;
 
+#ifdef __MOBILE__
+bool g_mobileInElevator = false;
+#endif
 
 int aog_input_floor()
 {
 	const auto& assets_info = AssetsInfo{};
+
+#ifdef __MOBILE__
+	g_mobileInElevator = true;
+#endif
 
 	static const std::string messages[4] =
 	{
@@ -3930,12 +3937,17 @@ int aog_input_floor()
 	}
 
 	IN_ClearKeysDown();
-
+#ifdef __MOBILE__
+	g_mobileInElevator = false;
+#endif
 	return result;
 }
 
 int ps_input_floor()
 {
+#ifdef __MOBILE__
+	g_mobileInElevator = true;
+#endif
 	const auto& assets_info = AssetsInfo{};
 
 	const auto RADAR_FLAGS = OV_KEYS;
@@ -4194,7 +4206,9 @@ int ps_input_floor()
 
 	DrawPlayScreen(false);
 	IN_ClearKeysDown();
-
+#ifdef __MOBILE__
+	g_mobileInElevator = false;
+#endif
 	return rt_code;
 }
 
