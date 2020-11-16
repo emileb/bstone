@@ -29,6 +29,7 @@ SRC =  \
         android/game_interface.cpp \
  		dosbox/dbopl.cpp \
  		lib/xbrz/xbrz.cpp \
+ 		bstone_archiver.cpp \
  		bstone_extent_2d.cpp \
  		bstone_offset_2d.cpp \
  		bstone_rect_2d.cpp \
@@ -82,20 +83,18 @@ SRC =  \
  		id_us_1.cpp \
  		id_vh.cpp \
  		id_vl.cpp \
- 		jm_cio.cpp \
  		jm_free.cpp \
- 		jm_io.cpp \
- 		jm_lzh.cpp \
  		jm_tp.cpp \
+ 		jm_lzh.cpp \
  		markhack.cpp \
  		movie.cpp \
  		scale.cpp \
  		stub.cpp \
  		vgapal.cpp \
+ 		bstone_low_pass_filter.cpp \
  		bstone_adlib_decoder.cpp \
  		bstone_adlib_music_decoder.cpp \
  		bstone_adlib_sfx_decoder.cpp \
- 		bstone_archiver_impl.cpp \
  		bstone_content_path.cpp \
  		bstone_audio_decoder.cpp \
  		bstone_audio_mixer.cpp \
@@ -108,7 +107,6 @@ SRC =  \
  		bstone_exception.cpp \
  		bstone_file_stream.cpp \
  		bstone_file_system.cpp \
- 		bstone_fixed_point.cpp \
  		bstone_fizzle_fx.cpp \
  		bstone_format_string.cpp \
  		bstone_generic_fizzle_fx.cpp \
@@ -119,7 +117,7 @@ SRC =  \
  		bstone_mt_task_mgr.cpp \
  		bstone_opl3.cpp \
  		bstone_pcm_audio_decoder.cpp \
- 		bstone_precompiled.cpp \
+ 		bstone_audio_sample_converter.cpp \
  		bstone_ps_fizzle_fx.cpp \
  		bstone_rgb8.cpp \
  		bstone_sha1.cpp \
