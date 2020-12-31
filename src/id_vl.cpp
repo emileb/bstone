@@ -89,7 +89,9 @@ bool vid_hw_is_draw_3d_ = false;
 
 bstone::SpriteCache vid_sprite_cache;
 
-
+#ifdef __MOBILE__
+void vid_cfg_read_renderer_kind(const std::string& value_string);
+#endif
 // BBi
 namespace
 {
@@ -763,6 +765,15 @@ void vid_cl_read_int(
 	value = int_value;
 }
 
+#ifdef __MOBILE__
+void vid_cl_read_renderer()
+{
+	const std::string& value_string = g_args.get_option_value(vid_get_renderer_key_name());
+
+	vid_cfg_read_renderer_kind(value_string);
+}
+#endif
+
 void vid_cl_read_is_windowed()
 {
 	vid_cl_read_bool(vid_get_is_windowed_key_name(), vid_cfg_.is_windowed_);
@@ -1080,6 +1091,9 @@ void vid_cl_read()
 	vid_cl_read_texture_upscale_filter();
 	vid_cl_read_texture_upscale_xbrz_degree();
 	vid_cl_read_filler_color_index();
+#ifdef __MOBILE__
+	vid_cl_read_renderer();
+#endif
 }
 
 void vid_cfg_read()
@@ -1398,7 +1412,10 @@ void sw_initialize_renderer()
 			vid_log("Using VSync.");
 		}
 	}
-
+	
+#ifdef __MOBILE__
+	renderer_flags |= SDL_RENDERER_ACCELERATED;
+#endif
 	{
 		vid_log("Creating renderer.");
 
@@ -1806,6 +1823,14 @@ void sw_uninitialize_video()
 	sw_uninitialize_vga_buffer();
 }
 
+#ifdef __MOBILE__
+extern "C"
+{
+	extern int mobile_screen_width;
+	extern int mobile_screen_height;
+}
+#endif
+
 void sw_refresh_screen()
 {
 	int sdl_result = 0;
@@ -1916,7 +1941,8 @@ void sw_refresh_screen()
 	}
 
 #ifdef __MOBILE__ //EMILE FIX
-	SDL_RenderSetScale(sw_renderer_.get(), 1776.0/800.0, 1080.0/480.0);
+	SDL_RenderSetScale(sw_renderer_.get(), (float)mobile_screen_width/(float)vid_cfg_.windowed_width_,
+	(float)mobile_screen_height/(float)vid_cfg_.windowed_height_);
 #endif
 	// Copy HUD+3D stuff
 	//
