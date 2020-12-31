@@ -34,6 +34,7 @@ extern bool g_mobileMenusAreFaded;
 extern bool g_mobileInConfirm;
 extern bool g_mobileInElevator;
 extern bool g_mobileWaitForAnyKey;
+extern bool g_mobileInPresenter;
 
 extern "C"
 {
@@ -273,7 +274,7 @@ touchscreemode_t PortableGetScreenMode()
 		 return TS_Y_N;
 	else if (g_mobileWaitForAnyKey)
 		return TS_MENU;
-    else if (!g_mobileMenusAreFaded || !ingame || g_mobileInElevator)
+    else if (!g_mobileMenusAreFaded || !ingame || g_mobileInElevator || g_mobileInPresenter)
         return TS_MENU;
     else
         return TS_GAME;

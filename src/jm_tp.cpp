@@ -1982,9 +1982,17 @@ static std::int16_t save_cx[TP_CURSOR_SAVES + 1] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 static std::int16_t save_cy[TP_CURSOR_SAVES + 1] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 static std::int16_t pagex[2], pagey[2];
 
+#ifdef __MOBILE__
+bool g_mobileInPresenter = false;
+#endif
+
 void TP_Presenter(
 	PresenterInfo* pinfo)
 {
+#ifdef __MOBILE__
+	g_mobileInPresenter = true;
+#endif
+
 	pi = pinfo;
 	bgcolor = pi->bgcolor;
 	ltcolor = pi->ltcolor;
@@ -2113,6 +2121,10 @@ void TP_Presenter(
 
 	pi->cur_x = cur_x;
 	pi->cur_y = cur_y;
+
+#ifdef __MOBILE__
+	g_mobileInPresenter = false;
+#endif
 }
 
 void TP_WrapText()
