@@ -3735,6 +3735,9 @@ int aog_input_floor()
 			draw_cursor = true;
 		}
 		else if (
+#ifdef __MOBILE__
+			Keyboard[ScanCode::sc_return] ||
+#endif
 			Keyboard[ScanCode::sc_space] ||
 			Keyboard[ScanCode::sc_mouse_left] ||
 			in_is_binding_pressed(BindingId::e_bi_attack))
