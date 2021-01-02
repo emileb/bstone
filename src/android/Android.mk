@@ -7,7 +7,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE    := bstone
 
-LOCAL_CFLAGS =  -O0 -g -fsigned-char -D__MOBILE__ -DENGINE_NAME=\"bstone\" -DBSTONE_USE_GLES -DBSTONE_OGL_DIRECT_LINK -DCEILING_FLOOR_COLORS -DBSTONE_REN_3D_TEST_NO_GL_2_0 -DBSTONE_REN_3D_TEST_NO_GL_3_2_C
+LOCAL_CFLAGS =  -O0 -g -fsigned-char -D__MOBILE__ -DBSTONE -DENGINE_NAME=\"bstone\" -DBSTONE_USE_GLES -DBSTONE_OGL_DIRECT_LINK -DCEILING_FLOOR_COLORS -DBSTONE_REN_3D_TEST_NO_GL_2_0 -DBSTONE_REN_3D_TEST_NO_GL_3_2_C
 LOCAL_CFLAGS += -fexceptions -frtti
 
 LOCAL_C_INCLUDES = $(LOCAL_PATH)/dosbox \
@@ -15,13 +15,12 @@ LOCAL_C_INCLUDES = $(LOCAL_PATH)/dosbox \
                    $(LOCAL_PATH)/lib/glm \
                    $(LOCAL_PATH)/android \
                    $(TOP_DIR)/ \
-	               $(LOCAL_PATH)/../../../Clibs_OpenTouch/alpha
+	               $(TOP_DIR)/Clibs_OpenTouch/alpha
 
 #also include my SDL for SDL_android_extra.h 
 LOCAL_C_INCLUDES += $(SDL_INCLUDE_PATHS)  $(TOP_DIR)/MobileTouchControls $(TOP_DIR)/Clibs_OpenTouch
 
 
-     #
           
 SRC =  \
         ../../../Clibs_OpenTouch/alpha/android_jni.cpp \

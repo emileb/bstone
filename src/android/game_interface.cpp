@@ -190,6 +190,11 @@ void PortableAction(int state, int action)
 	checkAck = true;
 }
 
+void PortableMouseButton(int state, int button, float dx, float dy)
+{
+
+}
+
 // =================== FORWARD and SIDE MOVMENT ==============
 
 static float forwardmove, sidemove; //Joystick mode
@@ -335,7 +340,7 @@ void pollAndroidControls(int tics,int *controlx, int *controly,int *controlstraf
 	switch(look_yaw_mode)
 	{
 	case LOOK_MODE_MOUSE:
-		*controlx += -look_yaw_mouse * 8000;
+		*controlx += -look_yaw_mouse * 12000;
 		look_yaw_mouse = 0;
 		break;
 	case LOOK_MODE_JOYSTICK:
