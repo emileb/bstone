@@ -9696,10 +9696,10 @@ void SetViewSize()
 		viewheight *= alignment;
 
 		vga_3d_view_top_y = 0 ;
-    	vga_3d_view_bottom_y = vga_3d_view_top_y + viewheight;
+		vga_3d_view_bottom_y = vga_3d_view_top_y + viewheight;
 
-    	screenofs = vga_3d_view_top_y * viewwidth;
-    	vga_3d_gun_offset_y = ((ref_bottom_bar_height * vga_height) / vga_ref_height);
+		screenofs = vga_3d_view_top_y * viewwidth;
+		vga_3d_gun_offset_y = ((ref_bottom_bar_height * vga_height) / vga_ref_height);
 	}
 	// calculate trace angles and projection constants
 	CalcProjection(FOCALLENGTH);
