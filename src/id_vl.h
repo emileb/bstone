@@ -148,6 +148,8 @@ extern int vga_area;
 extern int vga_3d_view_top_y;
 extern int vga_3d_view_bottom_y;
 
+extern int vga_3d_gun_offset_y; // Just used for SW mode to shift gun up above status bar
+
 const bool default_vid_widescreen = true;
 
 // Is VSync enabled?

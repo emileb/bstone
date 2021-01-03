@@ -76,6 +76,7 @@ int vga_height = 0;
 int vga_area = 0;
 int vga_3d_view_top_y = 0;
 int vga_3d_view_bottom_y = 0;
+int vga_3d_gun_offset_y = 0;
 
 bool vid_has_vsync = false;
 bool vid_is_hud = false;
@@ -569,10 +570,17 @@ void vid_calculate_window_elements_dimensions(
 		screen_viewport_width = screen_width_4x3;
 	}
 
-	const auto screen_viewport_top_height = ((ref_top_bar_height + ref_3d_margin) * screen_height) / vga_ref_height;
-	const auto screen_viewport_bottom_height = ((ref_bottom_bar_height + ref_3d_margin) * screen_height) / vga_ref_height;
-	const auto screen_viewport_height = screen_height - screen_viewport_top_height - screen_viewport_bottom_height;
 
+	auto screen_viewport_top_height = ((ref_top_bar_height + ref_3d_margin) * screen_height) / vga_ref_height;
+	auto screen_viewport_bottom_height = (((ref_bottom_bar_height + ref_3d_margin) * screen_height) / vga_ref_height);
+	auto screen_viewport_height = screen_height - screen_viewport_top_height - screen_viewport_bottom_height;
+
+	if(!vid_cfg_.is_ui_stretched_ && vid_cfg_.is_widescreen_)
+	{
+		screen_viewport_top_height =  0;
+		screen_viewport_bottom_height = 0;
+		screen_viewport_height = screen_height - screen_viewport_top_height - screen_viewport_bottom_height;
+	}
 	//
 	dst_param.window_width_ = window_width;
 	dst_param.window_height_ = window_height;
@@ -640,6 +648,11 @@ void vid_calculate_vga_dimensions()
 {
 	vga_width = vid_dimensions_.screen_viewport_width_;
 	vga_height = vid_align_dimension((10 * vid_dimensions_.screen_height_) / 12);
+
+	if(!vid_cfg_.is_ui_stretched_ && vid_cfg_.is_widescreen_)
+	{
+		vga_height = vid_align_dimension(vid_dimensions_.screen_height_);
+	}
 
 	vga_width_scale = static_cast<double>(vga_width) / static_cast<double>(vga_ref_width);
 	vga_height_scale = static_cast<double>(vga_height) / static_cast<double>(vga_ref_height);
@@ -2043,7 +2056,7 @@ void sw_refresh_screen()
 
 	// Use filler if necessary
 	//
-	if (!vid_cfg_.is_ui_stretched_)
+	if (!vid_cfg_.is_ui_stretched_ && !vid_cfg_.is_widescreen_)
 	{
 		const auto is_hud = vid_is_hud;
 
@@ -5258,11 +5271,13 @@ void hw_update_player_weapon_vb()
 
 	auto vertex_index = 0;
 
+	auto bottom_offset = !vid_cfg_.is_ui_stretched_ && vid_cfg_.is_widescreen_ ? ((100.0 * ref_bottom_bar_height) / vga_ref_height_4x3) : 0;
+
 	// Bottom-left.
 	//
 	{
 		auto& vertex = vertices[vertex_index++];
-		vertex.xyz_ = HwVertexPosition{-half_dimension, 0.0F, 0.0F};
+		vertex.xyz_ = HwVertexPosition{-half_dimension, bottom_offset, 0.0F};
 		vertex.uv_ = HwVertexTextureCoordinates{0.0F, 0.0F};
 	}
 
@@ -5270,7 +5285,7 @@ void hw_update_player_weapon_vb()
 	//
 	{
 		auto& vertex = vertices[vertex_index++];
-		vertex.xyz_ = HwVertexPosition{half_dimension, 0.0F, 0.0F};
+		vertex.xyz_ = HwVertexPosition{half_dimension, bottom_offset, 0.0F};
 		vertex.uv_ = HwVertexTextureCoordinates{1.0F, 0.0F};
 	}
 
@@ -5278,7 +5293,7 @@ void hw_update_player_weapon_vb()
 	//
 	{
 		auto& vertex = vertices[vertex_index++];
-		vertex.xyz_ = HwVertexPosition{half_dimension, dimension, 0.0F};
+		vertex.xyz_ = HwVertexPosition{half_dimension, dimension + bottom_offset, 0.0F};
 		vertex.uv_ = HwVertexTextureCoordinates{1.0F, 1.0F};
 	}
 
@@ -5286,7 +5301,7 @@ void hw_update_player_weapon_vb()
 	//
 	{
 		auto& vertex = vertices[vertex_index];
-		vertex.xyz_ = HwVertexPosition{-half_dimension, dimension, 0.0F};
+		vertex.xyz_ = HwVertexPosition{-half_dimension, dimension + bottom_offset, 0.0F};
 		vertex.uv_ = HwVertexTextureCoordinates{0.0F, 1.0F};
 	}
 
@@ -5992,7 +6007,7 @@ void hw_refresh_2d()
 
 	// Fillers.
 	//
-	if (!vid_cfg_.is_ui_stretched_)
+	if (!vid_cfg_.is_ui_stretched_ && !vid_cfg_.is_widescreen_)
 	{
 		{
 			auto& command = *command_buffer->write_set_texture();
@@ -7298,6 +7313,7 @@ void hw_apply_widescreen()
 	hw_build_projection_matrix();
 	hw_build_player_weapon_projection_matrix();
 	hw_update_3d_fade_vb();
+	hw_update_player_weapon_vb();
 }
 
 void hw_update_3d_fade()

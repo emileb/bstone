@@ -148,7 +148,7 @@ void generic_scale_shape(
 
 	const auto offset_y =
 		is_player_weapon ?
-		vga_3d_view_bottom_y - height + bob_offset :
+		vga_3d_view_bottom_y - height + bob_offset - vga_3d_gun_offset_y :
 		vga_3d_view_top_y + centery - half_height;
 
 	const auto left = sprite_ptr->get_left();
